@@ -51,8 +51,7 @@ void EKF::predict(double l, double r)
 
 		V << 0.5 * (cos(state_mean(2)) + l/WHEEL_WIDTH*sin(state_mean(2))), 0.5 * (cos(state_mean(2)) - l/WHEEL_WIDTH*sin(state_mean(2))),
 				 0.5 * (sin(state_mean(2)) - l/WHEEL_WIDTH*cos(state_mean(2))), 0.5 * (sin(state_mean(2)) + l/WHEEL_WIDTH*cos(state_mean(2))),
-				 -1/WHEEL_WIDTH,
-				 1/WHEEL_WIDTH;
+				 -1/WHEEL_WIDTH, 1/WHEEL_WIDTH;
 	}
 
 	delta_state << delta_x, 
