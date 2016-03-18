@@ -8,8 +8,10 @@
 class EKF
 {
 private: 
-	Eigen::Vector3d state_mean;
-	Eigen::Matrix3d state_cov;
+	Eigen::VectorXd state_mean;
+	Eigen::MatrixXd state_cov;
+
+	int num_landmarks;
 
 public:
 	EKF();
