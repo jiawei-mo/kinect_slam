@@ -5,7 +5,7 @@
 #define MOTION_FACTOR 0.3
 #define TURN_FACTOR 0.65
 
-class EKF
+class EKF_SLAM
 {
 private: 
 	Eigen::VectorXd state_mean;
@@ -14,7 +14,7 @@ private:
 	int num_landmarks;
 
 public:
-	EKF();
-	EKF(Eigen::Vector3d _mean, Eigen::Matrix3d _cov);
+	EKF_SLAM();
+	EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov);
 	void predict(double l, double r);
 };

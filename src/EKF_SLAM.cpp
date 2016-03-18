@@ -1,20 +1,20 @@
-#include "EKF.hpp"
+#include "EKF_SLAM.hpp"
 #include <iostream>
-EKF::EKF()
+EKF_SLAM::EKF_SLAM()
 {
 	state_mean = Eigen::Vector3d::Zero();
 	state_cov = Eigen::Matrix3d::Zero();
 	num_landmarks = 0;
 }
 
-EKF::EKF(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
+EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 {
 	state_mean = _mean;
 	state_cov = _cov;
 	num_landmarks = 0;
 }
 
-void EKF::predict(double l, double r)
+void EKF_SLAM::predict(double l, double r)
 {
 	double delta_x;
 	double delta_y;
