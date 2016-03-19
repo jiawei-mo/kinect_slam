@@ -7,8 +7,8 @@
 #include <math.h>
 #include <iostream>
 LandmarkMatcherNode::LandmarkMatcherNode(): 
-    img_sub(nh, "/kinect2/qhd/image_color_rect", 1),
-    dep_sub(nh, "/kinect2/qhd/image_depth_rect", 1),
+  img_sub(nh, "/kinect2/qhd/image_color_rect", 1),
+  dep_sub(nh, "/kinect2/qhd/image_depth_rect", 1),
 	info_sub(nh, "/kinect2/qhd/camera_info", 1),
 	sync(img_sub, dep_sub, info_sub, 10)
 {
@@ -21,6 +21,21 @@ LandmarkMatcherNode::LandmarkMatcherNode():
 
     br = tf2_ros::TransformBroadcaster();
 
+}
+
+void betset_to_matrix(std::vector< boost::dynamic_bitset<> > dscrt, cv::Mat& res)
+{
+	int rn = dscrt[0].size();
+	int cn = dscrt.size();
+	cv::Mat dscrtMat(rn, cn, CV_32F);
+	for(int j=0; j<cn; j++)
+	{
+		for(int i=0; i<rn; i++)
+		{
+			dscrtMat.at<float>(i,j) = dscrt[j][i]? 1 : 0;
+		}
+	}	
+	res = dscrtMat;
 }
 
 void LandmarkMatcherNode::imageMessageCallback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
@@ -51,17 +66,27 @@ void LandmarkMatcherNode::imageMessageCallback(const sensor_msgs::ImageConstPtr&
       circle(clr_img, kp[j].pt, 5, CV_RGB(255,0,0));
     }
 
-    cv::Mat kp_xyz(3, kp.size(), CV_32F);
-    for(int i=0; i<kp.size(); i++)
-    {
-        kp_xyz.at<float>(0, i) = kp[i].pt.x;
-        kp_xyz.at<float>(1, i) = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
-        kp_xyz.at<float>(2, i) = - kp[i].pt.y;
-    }
-
     std::vector< boost::dynamic_bitset<> > dscrt;
     de_ptr->extract(gry_img, kp, dscrt);
+    cv::Mat dscrtMat;
+    betset_to_matrix(dscrt, dscrtMat);
 
+    double fx = info->K[0];
+    double cx = info->K[2];
+    double fy = info->K[4];
+    double cy = info->K[5];
+
+    cv::Mat kp_measurement(3+dscrtMat.rows, kp.size(), CV_32F);
+    for(int i=0; i<kp.size(); i++)
+    {
+    	double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
+    	double x = z * (kp[i].pt.x - cx) / fx;
+    	double y = z * (kp[i].pt.y - cy) / fy;
+      kp_measurement.at<float>(0, i) = sqrt(x*x + z*z);
+      kp_measurement.at<float>(1, i) = atan2(z, x);
+      kp_measurement.at<float>(2, i) = - y;
+    }
+   	dscrtMat.copyTo(kp_measurement(cv::Rect(0,3,dscrtMat.cols, dscrtMat.rows)));
     // std::vector<cv::DMatch> matches;
     // sm_ptr->disparity_match(kp, last_kp, dscrt, last_dscrt, matches, vertical_offset, max_horizontal_threshold, min_horizontal_threshold);
     // sm_ptr->drawDisparity(clr_img, kp, last_kp, matches);
