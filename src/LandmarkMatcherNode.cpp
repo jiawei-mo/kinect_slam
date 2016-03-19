@@ -7,7 +7,6 @@
 #include <math.h>
 #include <iostream>
 LandmarkMatcherNode::LandmarkMatcherNode(): 
-	ransac_n(10),
     img_sub(nh, "/kinect2/qhd/image_color_rect", 1),
     dep_sub(nh, "/kinect2/qhd/image_depth_rect", 1),
 	info_sub(nh, "/kinect2/qhd/camera_info", 1),
@@ -67,13 +66,13 @@ void LandmarkMatcherNode::imageMessageCallback(const sensor_msgs::ImageConstPtr&
     std::vector< boost::dynamic_bitset<> > dscrt;
     de_ptr->extract(gry_img, kp, dscrt);
 
-    std::vector<cv::DMatch> matches;
-    sm_ptr->disparity_match(kp, last_kp, dscrt, last_dscrt, matches, vertical_offset, max_horizontal_threshold, min_horizontal_threshold);
-    sm_ptr->drawDisparity(clr_img, kp, last_kp, matches);
+    // std::vector<cv::DMatch> matches;
+    // sm_ptr->disparity_match(kp, last_kp, dscrt, last_dscrt, matches, vertical_offset, max_horizontal_threshold, min_horizontal_threshold);
+    // sm_ptr->drawDisparity(clr_img, kp, last_kp, matches);
 
-    last_kp = kp;
-    last_dscrt = dscrt;
-    last_kp_xyz = kp_xyz;
+    // last_kp = kp;
+    // last_dscrt = dscrt;
+    // last_kp_xyz = kp_xyz;
 }
 
 void LandmarkMatcherNode::updateConfig(kinect_slam::KinectSLAMConfig &config, uint32_t level)
@@ -95,13 +94,11 @@ void LandmarkMatcherNode::updateConfig(kinect_slam::KinectSLAMConfig &config, ui
     int max_t_th = config.max_horizontal_threshold;
 
     int tvo = config.vertical_offset;
-    int r_n = config.ransac_n;
 
     double mt = config.matcher_dist_threshold;
     double tf_th = config.tf_threshold;
 
     vertical_offset = tvo;
-    ransac_n = r_n;
     max_horizontal_threshold = max_t_th;
     min_horizontal_threshold = min_t_th;
 
