@@ -19,7 +19,6 @@ LandmarkMatcherNode::LandmarkMatcherNode():
     f = boost::bind(&LandmarkMatcherNode::updateConfig, this, _1, _2);
     server.setCallback(f);
 
-    Twc = cv::Mat::eye(4,4,CV_32F);
     br = tf2_ros::TransformBroadcaster();
 
 }
@@ -51,9 +50,6 @@ void LandmarkMatcherNode::imageMessageCallback(const sensor_msgs::ImageConstPtr&
     {
       circle(clr_img, kp[j].pt, 5, CV_RGB(255,0,0));
     }
-    cv::namedWindow("Test");
-    cv::imshow("Test", clr_img);
-    cv::waitKey(3);
 
     cv::Mat kp_xyz(3, kp.size(), CV_32F);
     for(int i=0; i<kp.size(); i++)

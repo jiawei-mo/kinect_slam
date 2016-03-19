@@ -25,12 +25,15 @@ private:
 	dynamic_reconfigure::Server<kinect_slam::KinectSLAMConfig> server;
 	dynamic_reconfigure::Server<kinect_slam::KinectSLAMConfig>::CallbackType f;
 
+	// std::vector< boost::dynamic_bitset<> > last_dscrt;
+ // 	std::vector<cv::KeyPoint> last_kp;
+ // 	cv::Mat last_kp_xyz;
+
 	int vertical_offset;
 	int max_horizontal_threshold;
   int min_horizontal_threshold;
 
-	// cv::Mat Twc;
-	// tf2_ros::TransformBroadcaster br;
+	tf2_ros::TransformBroadcaster br;
 
 public:
 	LandmarkMatcherNode();
