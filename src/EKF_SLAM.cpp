@@ -141,14 +141,14 @@ void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, int landmark_idx)
 }
 
 
-int main()
-{
-	EKF_SLAM mySLAM;
-	mySLAM.predict(3,3);
-	mySLAM.print_state();
-	mySLAM.add_landmark(6,3,8);
-	mySLAM.print_state();
-	Eigen::Vector3d measurement(4.242,0.7854,8);
-	mySLAM.measurement_update(measurement, 0);
-	mySLAM.print_state();
-}
+// int main()
+// {
+// 	EKF_SLAM mySLAM;
+// 	mySLAM.predict(3,3);
+// 	mySLAM.print_state();
+// 	mySLAM.add_landmark(6,3,8);
+// 	mySLAM.print_state();
+// 	Eigen::Vector3d measurement(4.242,0.7854,8);
+// 	mySLAM.measurement_update(measurement, 0);
+// 	mySLAM.print_state();
+// }
