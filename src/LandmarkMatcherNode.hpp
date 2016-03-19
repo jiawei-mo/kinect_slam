@@ -29,8 +29,8 @@ private:
 	int max_horizontal_threshold;
   int min_horizontal_threshold;
 
-	cv::Mat Twc;
-	tf2_ros::TransformBroadcaster br;
+	// cv::Mat Twc;
+	// tf2_ros::TransformBroadcaster br;
 
 public:
 	LandmarkMatcherNode();
