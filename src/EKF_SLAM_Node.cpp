@@ -56,7 +56,8 @@ void EKF_SLAM_Node::CtrlLmkCallback(const kinect_slam::PioneerVelControlConstPtr
 
   std::vector<cv::DMatch> matches;
   slam_ptr->landmark_match(measurements, measurementDB, descriptors, descriptorDB, matches, vertical_offset, max_horizontal_threshold, min_horizontal_threshold, dist_threshold);
-    
+  //TODO: change landmark tranportation msg 
+  //TODO: continue and call measurement update step
 }
 
 void EKF_SLAM_Node::updateConfig(kinect_slam::KinectSLAMConfig &config, uint32_t level)
