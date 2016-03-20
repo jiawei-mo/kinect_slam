@@ -14,12 +14,6 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 	num_landmarks = 0;
 }
 
-void EKF_SLAM::print_state()
-{
-	std::cout<<state_mean<<std::endl;
-	std::cout<<state_cov<<std::endl;
-}
-
 void EKF_SLAM::predict(double l, double r)
 {
 	double delta_x;
@@ -74,7 +68,7 @@ void EKF_SLAM::predict(double l, double r)
 	state_cov.block<3,3>(0,0) = G * state_cov.block<3,3>(0,0) * G.transpose() + V * cov_control * V.transpose();
 }
 
-void EKF_SLAM::add_landmark(double x, double y, double z)
+void EKF_SLAM::add_landmark(double x, double y, double z, boost::dynamic_bitset<> dscrt)
 {
 	int former_length = state_mean.rows();
 
@@ -91,6 +85,9 @@ void EKF_SLAM::add_landmark(double x, double y, double z)
 	state_cov(former_length, former_length) = INFINITE_COV;
 	state_cov(former_length+1, former_length+1) = INFINITE_COV;
 	state_cov(former_length+2, former_length+2) = INFINITE_COV;
+
+	descriptorDB.push_back(dscrt);
+	num_landmarks++;
 }
 
 void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, int landmark_idx)
@@ -138,6 +135,111 @@ void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, int landmark_idx)
 	Eigen::MatrixXd K = state_cov * H.transpose() * (H*state_cov*H.transpose()+Q).inverse();
 	state_mean += K*(measurement - _measurement);
 	state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
+}
+
+void EKF_SLAM::landmark_match(const cv::Mat& srcKeyPoints, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<cv::DMatch>& matches, double vertical_offset, double max_horizontal_threshold, double min_horizontal_threshold, double dist_threshold) const
+{
+  std::vector<cv::DMatch> l_matches;
+  std::vector<cv::DMatch> r_matches;
+  for(int i=0;i<srcKeyPoints.cols;i++)
+  {
+    int idx = -1;
+    int dsp = -1;
+    size_t dist = -1;
+    size_t scd_dist = -1;
+    for (int j=0;j<destKeyPoints.cols();j++)
+    {
+      double verticalDist = srcKeyPoints.at<float>(2,i) - destKeyPoints(2,j);
+      verticalDist = verticalDist>0 ? verticalDist : -verticalDist;
+      if(verticalDist > vertical_offset)
+        continue;
+
+      double cur_dsp = srcKeyPoints.at<float>(0,i)- destKeyPoints(0,j);
+      cur_dsp = cur_dsp>0? cur_dsp : -cur_dsp;
+      if(cur_dsp > max_horizontal_threshold || cur_dsp <min_horizontal_threshold)
+        continue;
+
+      boost::dynamic_bitset<> cur_bit = srcDescriptors[i] ^ destDescriptors[j];
+      size_t cur_dist = cur_bit.count();
+      if(dist == -1 || dist > cur_dist)
+      {
+        idx = j;
+        dsp = cur_dsp;
+        scd_dist = dist;
+        dist = cur_dist;
+      }
+    }
+    if(dist < dist_threshold*scd_dist && idx>0)
+    {
+      cv::DMatch match_i(i, idx, dsp);
+      l_matches.push_back(match_i);
+    }
+  }
+
+  for(int i=0;i<destKeyPoints.cols();i++)
+  {
+    int idx = -1;
+    int dsp = -1;
+    size_t dist = -1;
+    size_t scd_dist = -1;
+    for (int j=0;j<srcKeyPoints.cols;j++)
+    {
+      double verticalDist = destKeyPoints(2,i) - srcKeyPoints.at<float>(2,j);
+      verticalDist = verticalDist>0 ? verticalDist : -verticalDist;
+      if(verticalDist > vertical_offset)
+        continue;
+
+      double cur_dsp = destKeyPoints(0,i)- srcKeyPoints.at<float>(0,j);
+      cur_dsp = cur_dsp>0? cur_dsp : -cur_dsp;
+      if(cur_dsp > max_horizontal_threshold || cur_dsp <min_horizontal_threshold)
+        continue;
+
+      boost::dynamic_bitset<> cur_bit = destDescriptors[i] ^ srcDescriptors[j];
+      size_t cur_dist = cur_bit.count();
+      if(dist == -1 || dist > cur_dist)
+      {
+        idx = j;
+        dsp = cur_dsp;
+        scd_dist = dist;
+        dist = cur_dist;
+      }
+    }
+    if(dist < dist_threshold*scd_dist && idx>0)
+    {
+      cv::DMatch match_i(i, idx, dsp);
+      r_matches.push_back(match_i);
+    }
+  }
+
+  for(int i=0; i<l_matches.size(); i++)
+  {
+    for(int j=0; j<r_matches.size(); j++)
+    {
+      if(l_matches[i].queryIdx == r_matches[j].queryIdx || l_matches[i].trainIdx == r_matches[j].trainIdx)
+        matches.push_back(l_matches[i]);
+    }
+  }
+}
+
+void EKF_SLAM::getMeasurement(Eigen::MatrixXd& msmtDB, std::vector< boost::dynamic_bitset<> >& dscrtDB)
+{
+	Eigen::MatrixXd _msmtDB(3, num_landmarks);
+	for(int i=0; i<num_landmarks; i++)
+	{
+		_msmtDB(0, i) = state_mean(3+i*3);
+		_msmtDB(1, i) = state_mean(3+i*3+1);
+		_msmtDB(2, i) = state_mean(3+i*3+2);
+	}
+
+	msmtDB = _msmtDB;
+	dscrtDB = descriptorDB;
+}
+
+
+void EKF_SLAM::print_state()
+{
+	std::cout<<state_mean<<std::endl;
+	std::cout<<state_cov<<std::endl;
 }
 
 

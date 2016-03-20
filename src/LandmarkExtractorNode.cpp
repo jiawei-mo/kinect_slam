@@ -1,26 +1,24 @@
 #include "ros/ros.h"
-#include "LandmarkMatcherNode.hpp"
+#include "LandmarkExtractorNode.hpp"
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <math.h>
 #include <iostream>
-LandmarkMatcherNode::LandmarkMatcherNode(): 
+LandmarkExtractorNode::LandmarkExtractorNode(): 
+  it(nh),
   img_sub(nh, "/kinect2/qhd/image_color_rect", 1),
   dep_sub(nh, "/kinect2/qhd/image_depth_rect", 1),
 	info_sub(nh, "/kinect2/qhd/camera_info", 1),
 	sync(img_sub, dep_sub, info_sub, 10)
 {
-    sync.registerCallback(boost::bind(&LandmarkMatcherNode::imageMessageCallback, this, _1, _2, _3));
-    fd_ptr = boost::shared_ptr<HarrisDetector>(new HarrisDetector(7, 50, 50, 3, true, false, 7, 3));
-    de_ptr = boost::shared_ptr<BRIEF>(new BRIEF(15, 3, 8));
-    sm_ptr = boost::shared_ptr<StereoMatcher>(new StereoMatcher(0.75, 500.0));
-    f = boost::bind(&LandmarkMatcherNode::updateConfig, this, _1, _2);
-    server.setCallback(f);
-
-    br = tf2_ros::TransformBroadcaster();
-
+  sync.registerCallback(boost::bind(&LandmarkExtractorNode::imageMessageCallback, this, _1, _2, _3));
+  fd_ptr = boost::shared_ptr<HarrisDetector>(new HarrisDetector(7, 50, 50, 3, true, false, 7, 3));
+  de_ptr = boost::shared_ptr<BRIEF>(new BRIEF(15, 3, 8));
+  f = boost::bind(&LandmarkExtractorNode::updateConfig, this, _1, _2);
+  server.setCallback(f);
+  landmark_pub = it.advertise("landmarkWithDscrt", 1);
 }
 
 void betset_to_matrix(std::vector< boost::dynamic_bitset<> > dscrt, cv::Mat& res)
@@ -38,7 +36,7 @@ void betset_to_matrix(std::vector< boost::dynamic_bitset<> > dscrt, cv::Mat& res
 	res = dscrtMat;
 }
 
-void LandmarkMatcherNode::imageMessageCallback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
+void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
 {
     cv_bridge::CvImagePtr img_ptr, dep_ptr;
     cv::Mat gry_img;
@@ -87,16 +85,11 @@ void LandmarkMatcherNode::imageMessageCallback(const sensor_msgs::ImageConstPtr&
       kp_measurement.at<float>(2, i) = - y;
     }
    	dscrtMat.copyTo(kp_measurement(cv::Rect(0,3,dscrtMat.cols, dscrtMat.rows)));
-    // std::vector<cv::DMatch> matches;
-    // sm_ptr->disparity_match(kp, last_kp, dscrt, last_dscrt, matches, vertical_offset, max_horizontal_threshold, min_horizontal_threshold);
-    // sm_ptr->drawDisparity(clr_img, kp, last_kp, matches);
-
-    // last_kp = kp;
-    // last_dscrt = dscrt;
-    // last_kp_xyz = kp_xyz;
+    sensor_msgs::ImagePtr landmark_msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", kp_measurement).toImageMsg();
+    landmark_pub.publish(landmark_msg);
 }
 
-void LandmarkMatcherNode::updateConfig(kinect_slam::KinectSLAMConfig &config, uint32_t level)
+void LandmarkExtractorNode::updateConfig(kinect_slam::KinectSLAMConfig &config, uint32_t level)
 {
     int hws = config.harris_window_size; 
     bool haf = config.harris_anms_flag;
@@ -111,19 +104,6 @@ void LandmarkMatcherNode::updateConfig(kinect_slam::KinectSLAMConfig &config, ui
     int dbs = config.descriptor_brief_size;
     int dss = config.descriptor_smooth_size;
 
-    int min_t_th = config.min_horizontal_threshold;
-    int max_t_th = config.max_horizontal_threshold;
-
-    int tvo = config.vertical_offset;
-
-    double mt = config.matcher_dist_threshold;
-    double tf_th = config.tf_threshold;
-
-    vertical_offset = tvo;
-    max_horizontal_threshold = max_t_th;
-    min_horizontal_threshold = min_t_th;
-
     fd_ptr = boost::shared_ptr<HarrisDetector>(new HarrisDetector(hws, hrt, hnp, har, hff, haf, hbs, hbv));
     de_ptr = boost::shared_ptr<BRIEF>(new BRIEF(dps, dss, dbs));
-    sm_ptr = boost::shared_ptr<StereoMatcher>(new StereoMatcher(mt, tf_th));
 }
