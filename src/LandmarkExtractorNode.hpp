@@ -6,18 +6,17 @@
 #include <message_filters/time_synchronizer.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <image_transport/image_transport.h>
+#include "kinect_slam/LandmarkMsg.h"
 
 class LandmarkExtractorNode
 {
 private:
 	ros::NodeHandle nh;
-	image_transport::ImageTransport it;
-	image_transport::Publisher landmark_pub;
 	message_filters::Subscriber<sensor_msgs::Image> img_sub;
 	message_filters::Subscriber<sensor_msgs::Image> dep_sub;
 	message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub;
 	message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo> sync;
+	ros::Publisher landmark_pub;
 
 	boost::shared_ptr<HarrisDetector> fd_ptr;
 	boost::shared_ptr<BRIEF> de_ptr;

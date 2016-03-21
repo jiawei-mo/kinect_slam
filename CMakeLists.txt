@@ -20,6 +20,7 @@ add_message_files(
   FILES
   BumperState.msg
   PioneerVelControl.msg
+  LandmarkMsg.msg
 )
 
 generate_dynamic_reconfigure_options(

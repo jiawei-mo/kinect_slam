@@ -27,7 +27,6 @@ public:
 	void predict(double l, double r);
 	void add_landmark(double x, double y, double z, boost::dynamic_bitset<> dscrt);
 	void measurement_update(Eigen::Vector3d measurement, int landmark_idx);
-	void landmark_match(const cv::Mat& srcKeyPoints, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<cv::DMatch>& matches, double vertical_offset, double max_horizontal_threshold, double min_horizontal_threshold, double dist_threshold) const;
-	void getMeasurement(Eigen::MatrixXd& msmtDB, std::vector< boost::dynamic_bitset<> >& dscrtDB);
+	void landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<cv::DMatch>& matches, double max_signature_threshold, double match_threshold) const;
 	void print_state();
 };
