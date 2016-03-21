@@ -50,6 +50,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 add_executable(slam_node src/ekf_slam_node_main.cpp src/EKF_SLAM_Node.cpp src/EKF_SLAM.cpp)
 add_executable(kinect_node src/LandmarkExtractorNode_main.cpp src/LandmarkExtractorNode.cpp src/HarrisDetector.cpp src/BRIEF.cpp)
+add_executable(pioneerVelPublisher_node src/PioneerVelPublisher.cpp)
 
 add_executable(aria src/RosAria.cpp src/LaserPublisher.cpp)
 add_dependencies(aria rosaria_gencfg)
@@ -59,8 +60,9 @@ add_dependencies(kinect_node ${PROJECT_NAME}_gencfg)
 
 find_package(OpenCV REQUIRED)
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(slam_node ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(slam_node ${catkin_LIBRARIES})
 target_link_libraries(kinect_node ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(pioneerVelPublisher_node ${catkin_LIBRARIES})
 
 target_link_libraries(aria ${catkin_LIBRARIES} ${Boost_LIBRARIES} Aria pthread dl rt)
 set_target_properties(aria PROPERTIES COMPILE_FLAGS "-fPIC")

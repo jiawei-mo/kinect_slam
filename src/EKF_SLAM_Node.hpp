@@ -24,6 +24,7 @@ private:
 
   double max_signature_threshold;
   double match_threshold;
+  int new_landmark_threshold;
 
 public:
 	EKF_SLAM_Node();

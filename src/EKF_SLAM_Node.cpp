@@ -1,7 +1,4 @@
 #include "EKF_SLAM_Node.hpp"
-#include <cv_bridge/cv_bridge.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 EKF_SLAM_Node::EKF_SLAM_Node():
 	vel_sub(nh, "/control", 1),
@@ -39,14 +36,35 @@ void EKF_SLAM_Node::CtrlLmkCallback(const kinect_slam::PioneerVelControlConstPtr
 
   slam_ptr->predict(l_vel, r_vel);
 
-  std::vector<cv::DMatch> matches;
+  std::vector<std::array<size_t, 3> > matches;
   slam_ptr->landmark_match(measurements, descriptors, matches, max_signature_threshold, match_threshold);
   std::cout<<matches.size()<<std::endl;
-  //TODO: continue and call measurement update step
+  bool flags[landmark_count];
+  for(int i=0; i<landmark_count; i++) flags[i] = false;
+  for(int i=0; i<matches.size(); i++)
+  {
+    flags[i] = true;
+    if(matches[i][2] > new_landmark_threshold)
+      slam_ptr->add_landmark(measurements(0, matches[i][0]), measurements(1, matches[i][0]), measurements(2, matches[i][0]), descriptors[matches[i][0]]);
+    else
+    {
+      Eigen::Vector3d matched_measurement;
+      matched_measurement << measurements(0, matches[i][0]), measurements(1, matches[i][0]), measurements(2, matches[i][0]);
+      slam_ptr->measurement_update(matched_measurement, matches[i][1]);
+    }
+  }
+  for(int i=0; i<landmark_count; i++)
+  {
+    if(!flags[i])
+    {
+      slam_ptr->add_landmark(measurements(0,i), measurements(1,i), measurements(2,i), descriptors[i]);
+    }
+  }
 }
 
 void EKF_SLAM_Node::updateConfig(kinect_slam::KinectSLAMConfig &config, uint32_t level)
 {
   max_signature_threshold = config.max_signature_threshold;
   match_threshold = config.match_threshold;
+  new_landmark_threshold = config.new_landmark_threshold;
 }
