@@ -88,6 +88,7 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 
 void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_idx)
 {
+	//std::cout<<"start"<<std::endl;
 	Eigen::Matrix3d Q;
 	Q << KINECT_RANGE_VAR, 0, 0,
 			 0, KINECT_BARING_VAR, 0,
@@ -128,9 +129,13 @@ void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_i
 
 	H = H_reduced*F;
 
+	//std::cout<<"before inverse"<<std::endl;
 	Eigen::MatrixXd K = state_cov * H.transpose() * (H*state_cov*H.transpose()+Q).inverse();
+	//std::cout<<"after inverse"<<std::endl;
 	state_mean += K*(measurement - _measurement);
-	state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
+	//std::cout<<"mean update"<<std::endl;
+	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
+	//std::cout<<"end"<<std::endl;
 }
 
 void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<std::array<size_t, 3> >& matches, double max_signature_threshold, double match_threshold) const
@@ -214,6 +219,6 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
 
 void EKF_SLAM::print_state()
 {
-	std::cout<<state_mean<<std::endl;
-	std::cout<<state_cov<<std::endl;
+	std::cout<<state_mean.rows()<<std::endl;
+	// std::cout<<state_cov<<std::endl;
 }

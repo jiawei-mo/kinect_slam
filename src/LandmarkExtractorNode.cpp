@@ -6,6 +6,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <math.h>
 #include <iostream>
+#define MIN_DEPTH_MM 10
+
 LandmarkExtractorNode::LandmarkExtractorNode(): 
   img_sub(nh, "/kinect2/qhd/image_color_rect", 1),
   dep_sub(nh, "/kinect2/qhd/image_depth_rect", 1),
@@ -21,30 +23,14 @@ LandmarkExtractorNode::LandmarkExtractorNode():
   landmark_pub = nh.advertise<kinect_slam::LandmarkMsg>("landmarkWithDscrt", 50);
 }
 
-void dscrt_betset_to_landmarkMsg(std::vector< boost::dynamic_bitset<> > dscrt, kinect_slam::LandmarkMsg& res)
-{
-	int rn = dscrt[0].size();
-	int cn = dscrt.size();
-  res.descriptor_mat.clear();
-  res.landmark_count = rn;
-  res.descriptor_len = rn;
-	for(int j=0; j<cn; j++)
-	{
-		for(int i=0; i<rn; i++)
-		{
-			res.descriptor_mat.push_back(dscrt[j][i]? 1.0 : 0.0);
-		}
-	}	
-}
-
 void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
 {
-    cv_bridge::CvImagePtr img_ptr, dep_ptr;
+    cv_bridge::CvImageConstPtr img_ptr, dep_ptr;
     cv::Mat gry_img;
     try
     {
-        img_ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::BGR8);
-        dep_ptr = cv_bridge::toCvCopy(dep, sensor_msgs::image_encodings::TYPE_16UC1);
+        img_ptr = cv_bridge::toCvShare(img, img->encoding);
+        dep_ptr = cv_bridge::toCvShare(dep, dep->encoding);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -52,25 +38,21 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
         return;
     } 
 
-    cv::Mat clr_img = img_ptr->image;
+    cv::Mat clr_img, depth;
+    img_ptr->image.copyTo(clr_img);
+    dep_ptr->image.copyTo(depth);
     //ERROR: depth seems incorrect(to small: e^-30)
-    cv::Mat depth = dep_ptr->image;
+    // std::cout<<depth<<std::endl;
 
     cvtColor(clr_img, gry_img, CV_BGR2GRAY);
 
     std::vector<cv::KeyPoint> kp;
     fd_ptr->detect(gry_img, kp);
 
-    for(int j=0;j<kp.size();j++)
-    {
-      circle(clr_img, kp[j].pt, 5, CV_RGB(255,0,0));
-    }
-
     std::vector< boost::dynamic_bitset<> > dscrt;
     de_ptr->extract(gry_img, kp, dscrt);
 
     kinect_slam::LandmarkMsg new_measurement_msg;
-    dscrt_betset_to_landmarkMsg(dscrt, new_measurement_msg);
 
     double fx = info->K[0];
     double cx = info->K[2];
@@ -79,16 +61,23 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
     new_measurement_msg.position_x.clear();
     new_measurement_msg.position_y.clear();
     new_measurement_msg.position_signature.clear();
+    new_measurement_msg.landmark_count = 0;
+    new_measurement_msg.descriptor_len = dscrt[0].size();
     for(int i=0; i<kp.size(); i++)
     {
-    	double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
+    	unsigned short zt = depth.at<unsigned short>(kp[i].pt.y, kp[i].pt.x);
+      if(zt<MIN_DEPTH_MM ) continue;
+      double z = static_cast<double>(zt);
     	double x = z * (kp[i].pt.x - cx) / fx;
     	double y = z * (kp[i].pt.y - cy) / fy;
       new_measurement_msg.position_x.push_back(x);
       new_measurement_msg.position_y.push_back(z);
       new_measurement_msg.position_signature.push_back(- y);
+      for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
+      new_measurement_msg.landmark_count++;
     }
    	landmark_pub.publish(new_measurement_msg);
+    // std::cout<<new_measurement_msg.descriptor_mat.size()<<std::endl;
 }
 
 void LandmarkExtractorNode::updateConfig(kinect_slam::KinectSLAMConfig &config, uint32_t level)
