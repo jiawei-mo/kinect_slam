@@ -37,6 +37,7 @@ add_executable(pioneerVelPublisher_node src/PioneerVelPublisher.cpp)
 
 add_dependencies(slam_node ${PROJECT_NAME}_gencfg)
 add_dependencies(kinect_node ${PROJECT_NAME}_gencfg)
+add_dependencies(pioneerVelPublisher_node ${PROJECT_NAME}_gencfg)
 
 find_package(OpenCV REQUIRED)
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})

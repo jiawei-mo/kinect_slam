@@ -17,7 +17,7 @@ private:
 	message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub;
 	message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo> sync;
 	ros::Publisher landmark_pub;
-
+	ros::Publisher pcl_pub;
 	boost::shared_ptr<HarrisDetector> fd_ptr;
 	boost::shared_ptr<BRIEF> de_ptr;
 	dynamic_reconfigure::Server<kinect_slam::KinectSLAMConfig> server;
