@@ -24,12 +24,12 @@ void EKF_SLAM_Node::CtrlLmkCallback(const kinect_slam::PioneerVelControlConstPtr
   int d_c = 0;
   for(int j=0; j<landmark_count; j++)
   {
-    std::cout<<"x: "<<lmk->position_x[j]<<" y: "<<lmk->position_y[j]<<" z: "<<lmk->position_signature[j]<<std::endl;
-    measurements(0,j) = lmk->position_x[j];
+    // std::cout<<"x: "<<lmk->position_x[j]<<" y: "<<lmk->position_y[j]<<" z: "<<lmk->position_signature[j]<<std::endl;
+    measurements(0,j) = lmk->position_x[j] / 1000.0;
     // std::cout<<"x: "<<lmk->position_x[j];
-    measurements(1,j) = lmk->position_y[j];
+    measurements(1,j) = lmk->position_y[j] / 1000.0;
     // std::cout<<" y: "<<lmk->position_y[j];
-    measurements(2,j) = lmk->position_signature[j];
+    measurements(2,j) = lmk->position_signature[j] / 1000.0;
     // std::cout<<" signature: "<<lmk->position_signature[j]<<std::endl;
     boost::dynamic_bitset<> cur(descriptor_len);
     for(int i=0; i<descriptor_len; i++)
@@ -61,8 +61,8 @@ void EKF_SLAM_Node::CtrlLmkCallback(const kinect_slam::PioneerVelControlConstPtr
       slam_ptr->add_landmark(measurements(0,i), measurements(1,i), measurements(2,i), descriptors[i]);
     }
   }
-  std::cout<<"state size: "<<std::endl;
-  slam_ptr->print_state();
+  std::cout<<"landmark_count: ";
+  slam_ptr->landmark_count();
 }
 
 void EKF_SLAM_Node::updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t level)

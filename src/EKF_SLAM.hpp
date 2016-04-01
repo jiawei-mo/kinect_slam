@@ -1,4 +1,4 @@
-#include <Eigen/Dense>
+#include <Eigen/LU>
 #include <Eigen/Core>
 #include <math.h> 
 #include <boost/dynamic_bitset.hpp>
@@ -29,4 +29,5 @@ public:
 	void measurement_update(Eigen::Vector3d measurement, size_t landmark_idx);
 	void landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<std::array<size_t, 3> >& matches, double max_signature_threshold, double match_threshold) const;
 	void print_state();
+	void landmark_count();
 };

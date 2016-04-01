@@ -130,28 +130,19 @@ void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_i
 	H = H_reduced*F;
 
 	//std::cout<<"before inverse"<<std::endl;
-	Eigen::MatrixXd K = state_cov * H.transpose() * (H*state_cov*H.transpose()+Q).inverse();
+	Eigen::MatrixXd S = H*state_cov*H.transpose()+Q;
+	Eigen::MatrixXd K = state_cov * H.transpose() * S.inverse();
 	//std::cout<<"after inverse"<<std::endl;
 	state_mean += K*(measurement - _measurement);
 	//std::cout<<"mean update"<<std::endl;
+	state_cov = state_cov - K*S*K.transpose();
 	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
 	//std::cout<<"end"<<std::endl;
 }
 
-void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<std::array<size_t, 3> >& matches, double max_signature_threshold, double match_threshold) const
+void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<std::array<size_t, 3> >& matches, double max_signature_threshold, double match_threshold)
 {
-	Eigen::MatrixXd destKeyPoints(3, num_landmarks);
-	for(int i=0; i<num_landmarks; i++)
-	{
-		destKeyPoints(0, i) = state_mean(3+i*3);
-		destKeyPoints(1, i) = state_mean(3+i*3+1);
-		destKeyPoints(2, i) = state_mean(3+i*3+2);
-	}
-	std::vector< boost::dynamic_bitset<> > destDescriptors = descriptorDB;
-
-  std::vector<std::array<size_t, 3>> l_matches;
-  std::vector<std::array<size_t, 3>> r_matches;
-  for(size_t i=0;i<srcKeyPoints.cols();i++)
+	for(size_t i=0;i<srcKeyPoints.cols();i++)
   {
     size_t idx = -1;
     size_t dist = -1;
@@ -175,43 +166,33 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
     if(dist < match_threshold*scd_dist && idx>0)
     {
       std::array<size_t, 3> match_i = {i, idx, dist};
-      l_matches.push_back(match_i);
+      matches.push_back(match_i);
     }
   }
+}
 
-  for(size_t i=0;i<destKeyPoints.cols();i++)
-  {
-    size_t idx = -1;
-    size_t dist = -1;
-    size_t scd_dist = -1;
-    for (size_t j=0;j<srcKeyPoints.cols();j++)
-    {
-      double signature = destKeyPoints(2,i) - srcKeyPoints(2,j);
-      signature = signature>0 ? signature : -signature;
-      if(signature > max_signature_threshold)
-        continue;
+void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<std::array<size_t, 3> >& matches, double max_signature_threshold, double match_threshold) const
+{
+	Eigen::MatrixXd destKeyPoints(3, num_landmarks);
+	for(int i=0; i<num_landmarks; i++)
+	{
+		destKeyPoints(0, i) = state_mean(3+i*3);
+		destKeyPoints(1, i) = state_mean(3+i*3+1);
+		destKeyPoints(2, i) = state_mean(3+i*3+2);
+	}
+	std::vector< boost::dynamic_bitset<> > destDescriptors = descriptorDB;
 
-      boost::dynamic_bitset<> cur_bit = destDescriptors[i] ^ srcDescriptors[j];
-      size_t cur_dist = cur_bit.count();
-      if(dist == -1 || dist > cur_dist)
-      {
-        idx = j;
-        scd_dist = dist;
-        dist = cur_dist;
-      }
-    }
-    if(dist < match_threshold*scd_dist && idx>0)
-    {
-      std::array<size_t, 3> match_i = {idx, i, dist};
-      r_matches.push_back(match_i);
-    }
-  }
+  std::vector<std::array<size_t, 3>> l_matches;
+  std::vector<std::array<size_t, 3>> r_matches;
+
+  match(srcKeyPoints, srcDescriptors, destKeyPoints, destDescriptors, l_matches, max_signature_threshold, match_threshold);
+  match(destKeyPoints, destDescriptors, srcKeyPoints, srcDescriptors, r_matches, max_signature_threshold, match_threshold);
 
   for(int i=0; i<l_matches.size(); i++)
   {
     for(int j=0; j<r_matches.size(); j++)
     {
-      if(l_matches[i][0] == r_matches[j][0] && l_matches[i][1] == r_matches[j][1])
+      if(l_matches[i][0] == r_matches[j][1] && l_matches[i][1] == r_matches[j][0])
         matches.push_back(l_matches[i]);
     }
   }
@@ -219,6 +200,11 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
 
 void EKF_SLAM::print_state()
 {
-	std::cout<<state_mean.rows()<<std::endl;
-	// std::cout<<state_cov<<std::endl;
+	std::cout<<state_mean<<std::endl;
+	std::cout<<state_cov<<std::endl;
+}
+
+void EKF_SLAM::landmark_count()
+{
+	std::cout<<(state_mean.rows()-3)/3<<std::endl;
 }
