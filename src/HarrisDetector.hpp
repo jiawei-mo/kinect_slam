@@ -19,7 +19,6 @@ public:
 	HarrisDetector(int hws, float hrt, int hnp, int har, bool hff, bool haf, int hbs, int hbv);
 	~HarrisDetector();
 	void extract_fixed_number(std::vector<cv::KeyPoint>& input, std::vector<cv::KeyPoint>& output) const;
-	void extract_threshold(std::vector<cv::KeyPoint>& input, std::vector<cv::KeyPoint>& output) const;
 	void extract_ANMS(std::vector<cv::KeyPoint>& input, std::vector<cv::KeyPoint>& output, int row_number, int col_number) const;
 	void detect(const cv::Mat& image, std::vector<cv::KeyPoint>& keyPoints) const;
 

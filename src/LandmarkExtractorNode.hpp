@@ -1,7 +1,7 @@
 #include <dynamic_reconfigure/server.h>
 #include "HarrisDetector.hpp"
 #include "BRIEF.hpp"
-#include "kinect_slam/KinectSLAMConfig.h"
+#include "kinect_slam/LandmarkExtractorConfig.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <sensor_msgs/Image.h>
@@ -20,12 +20,12 @@ private:
 	ros::Publisher pcl_pub;
 	boost::shared_ptr<HarrisDetector> fd_ptr;
 	boost::shared_ptr<BRIEF> de_ptr;
-	dynamic_reconfigure::Server<kinect_slam::KinectSLAMConfig> server;
-	dynamic_reconfigure::Server<kinect_slam::KinectSLAMConfig>::CallbackType f;
+	dynamic_reconfigure::Server<kinect_slam::LandmarkExtractorConfig> server;
+	dynamic_reconfigure::Server<kinect_slam::LandmarkExtractorConfig>::CallbackType f;
 
 public:
 	LandmarkExtractorNode();
 	~LandmarkExtractorNode(){};
 	void imageMessageCallback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info);
-	void updateConfig(kinect_slam::KinectSLAMConfig &config, uint32_t level);
+	void updateConfig(kinect_slam::LandmarkExtractorConfig &config, uint32_t level);
 };

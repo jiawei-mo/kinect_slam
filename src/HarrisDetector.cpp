@@ -53,7 +53,7 @@ void HarrisDetector::harrisCorners(const cv::Mat& image, std::vector<cv::KeyPoin
   		for(int j=0;j<H.cols;j++)
   		{
   			float& Hij = H.at<float>(i,j);
-  			if(Hij>0)
+  			if(Hij>harris_response_threshold)
   			{
   				float theta = std::atan2(theta_Iy.at<float>(i,j), theta_Ix.at<float>(i,j));
   				keyPoints.push_back(cv::KeyPoint(cv::Point(j,i),0,theta,Hij));
@@ -103,31 +103,10 @@ void HarrisDetector::extract_fixed_number(std::vector<cv::KeyPoint>& input, std:
 	}
 }
 
-void HarrisDetector::extract_threshold(std::vector<cv::KeyPoint>& input, std::vector<cv::KeyPoint>& output) const
-{
-	float max=0;
-	for (int i=0;i<input.size();i++)
-	{
-		if(input[i].response>max)
-		{
-			max = input[i].response;
-		}
-	}
-
-  	float tH = harris_response_threshold*max;
-	for (int i=0;i<input.size();i++)
-	{
-		if(input[i].response>tH)
-		{
-			output.push_back(input[i]);
-		}
-	}
-}
-
 void HarrisDetector::extract_ANMS(std::vector<cv::KeyPoint>& input, std::vector<cv::KeyPoint>& output, int row_number, int col_number) const
 {
   	std::vector<cv::KeyPoint> input_filted;
-	extract_threshold(input, input_filted);
+	extract_fixed_number(input, input_filted);
 	cv::Mat max_res = cv::Mat::zeros(row_number, col_number, CV_32F);
 	for(int n=0; n<input_filted.size(); n++)
 	{
@@ -157,12 +136,10 @@ void HarrisDetector::detect(const cv::Mat& image, std::vector<cv::KeyPoint>& key
 {	
   	std::vector<cv::KeyPoint> allKeyPoints;
 	harrisCorners(image, allKeyPoints);
-  	if(harris_anms_flag)
+  if(harris_anms_flag)
 		extract_ANMS(allKeyPoints, keyPoints, image.rows, image.cols);
-	else if(harris_fix_number_flag)
+	else 
 		extract_fixed_number(allKeyPoints, keyPoints);
-	else
-		extract_threshold(allKeyPoints, keyPoints);
 
 	float max = 0;
 	for(int i=0;i<keyPoints.size();i++)

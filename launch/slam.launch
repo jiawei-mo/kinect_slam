@@ -1,0 +1,5 @@
+<launch>
+	<node pkg="kinect_slam" type="kinect_node" name="kinect_node" output="screen"/>
+	<node pkg="kinect_slam" type="pioneerVelPublisher_node" name="pioneerVelPublisher_node" output="screen"/>
+	<node pkg="kinect_slam" type="slam_node" name="slam_node" output="screen"/>
+</launch>

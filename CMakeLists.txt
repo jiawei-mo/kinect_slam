@@ -23,7 +23,8 @@ add_message_files(
 )
 
 generate_dynamic_reconfigure_options(
-  cfg/KinectSLAMConfig.cfg
+  cfg/EKFSLAMConfig.cfg
+  cfg/LandmarkExtractorConfig.cfg
 )
 
 find_package(Boost REQUIRED COMPONENTS thread)

@@ -54,6 +54,16 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
 
     std::vector<cv::KeyPoint> kp;
     fd_ptr->detect(gry_img, kp);
+    if(kp.size()==0) return; 
+    
+    for(int j=0;j<kp.size();j++)
+    {
+      circle(clr_img, kp[j].pt, 5, CV_RGB(255,0,0));
+    }
+
+    cv::namedWindow("Feature Points");
+    cv::imshow("Feature Points", clr_img);
+    cv::waitKey(3);
 
     std::vector< boost::dynamic_bitset<> > dscrt;
     de_ptr->extract(gry_img, kp, dscrt);
@@ -79,7 +89,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
     for(int i=0; i<kp.size(); i++)
     {
     	unsigned short zt = depth.at<unsigned short>(kp[i].pt.y, kp[i].pt.x);
-      // if(zt<MIN_DEPTH_MM ) continue;
+      if(zt<MIN_DEPTH_MM ) continue;
       double z = static_cast<double>(zt);
     	double x = z * (kp[i].pt.x - cx) / fx;
     	double y = z * (kp[i].pt.y - cy) / fy;
@@ -100,7 +110,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
     // std::cout<<new_measurement_msg.descriptor_mat.size()<<std::endl;
 }
 
-void LandmarkExtractorNode::updateConfig(kinect_slam::KinectSLAMConfig &config, uint32_t level)
+void LandmarkExtractorNode::updateConfig(kinect_slam::LandmarkExtractorConfig &config, uint32_t level)
 {
     int hws = config.harris_window_size; 
     bool haf = config.harris_anms_flag;

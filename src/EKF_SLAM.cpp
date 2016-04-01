@@ -211,7 +211,7 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
   {
     for(int j=0; j<r_matches.size(); j++)
     {
-      if(l_matches[i][0] == r_matches[j][0] || l_matches[i][1] == r_matches[j][1])
+      if(l_matches[i][0] == r_matches[j][0] && l_matches[i][1] == r_matches[j][1])
         matches.push_back(l_matches[i]);
     }
   }
