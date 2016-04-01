@@ -31,83 +31,83 @@ LandmarkExtractorNode::LandmarkExtractorNode():
 
 void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
 {
-    cv_bridge::CvImageConstPtr img_ptr, dep_ptr;
-    cv::Mat gry_img;
-    try
-    {
-        img_ptr = cv_bridge::toCvShare(img, img->encoding);
-        dep_ptr = cv_bridge::toCvShare(dep, dep->encoding);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-    } 
+  cv_bridge::CvImageConstPtr img_ptr, dep_ptr;
+  cv::Mat gry_img;
+  try
+  {
+      img_ptr = cv_bridge::toCvShare(img, img->encoding);
+      dep_ptr = cv_bridge::toCvShare(dep, dep->encoding);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+  } 
 
-    cv::Mat clr_img, depth;
-    img_ptr->image.copyTo(clr_img);
-    dep_ptr->image.copyTo(depth);
-    //ERROR: depth seems incorrect(to small: e^-30)
-    // std::cout<<depth<<std::endl;
+  cv::Mat clr_img, depth;
+  img_ptr->image.copyTo(clr_img);
+  dep_ptr->image.copyTo(depth);
+  //ERROR: depth seems incorrect(to small: e^-30)
+  // std::cout<<depth<<std::endl;
 
-    cvtColor(clr_img, gry_img, CV_BGR2GRAY);
+  cvtColor(clr_img, gry_img, CV_BGR2GRAY);
 
-    std::vector<cv::KeyPoint> kp;
-    fd_ptr->detect(gry_img, kp);
-    if(kp.size()==0) return; 
-    
-    for(int j=0;j<kp.size();j++)
-    {
-      circle(clr_img, kp[j].pt, 5, CV_RGB(255,0,0));
-    }
+  std::vector<cv::KeyPoint> kp;
+  fd_ptr->detect(gry_img, kp);
+  if(kp.size()==0) return; 
+  
+  for(int j=0;j<kp.size();j++)
+  {
+    circle(clr_img, kp[j].pt, 5, CV_RGB(255,0,0));
+  }
 
-    cv::namedWindow("Feature Points");
-    cv::imshow("Feature Points", clr_img);
-    cv::waitKey(3);
+  cv::namedWindow("Feature Points");
+  cv::imshow("Feature Points", clr_img);
+  cv::waitKey(3);
 
-    std::vector< boost::dynamic_bitset<> > dscrt;
-    de_ptr->extract(gry_img, kp, dscrt);
+  std::vector< boost::dynamic_bitset<> > dscrt;
+  de_ptr->extract(gry_img, kp, dscrt);
 
-    kinect_slam::LandmarkMsg new_measurement_msg;
+  kinect_slam::LandmarkMsg new_measurement_msg;
 
-    double fx = info->K[0];
-    double cx = info->K[2];
-    double fy = info->K[4];
-    double cy = info->K[5];
-    new_measurement_msg.position_x.clear();
-    new_measurement_msg.position_y.clear();
-    new_measurement_msg.position_signature.clear();
-    new_measurement_msg.landmark_count = 0;
-    new_measurement_msg.descriptor_len = dscrt[0].size();
+  double fx = info->K[0];
+  double cx = info->K[2];
+  double fy = info->K[4];
+  double cy = info->K[5];
+  new_measurement_msg.position_x.clear();
+  new_measurement_msg.position_y.clear();
+  new_measurement_msg.position_signature.clear();
+  new_measurement_msg.landmark_count = 0;
+  new_measurement_msg.descriptor_len = dscrt[0].size();
 
-    PointCloud::Ptr msg (new PointCloud);
-    msg->header.frame_id = "map";
-    msg->height = 1;
-    msg->width = kp.size();
-    msg->points.resize(msg->height * msg->width);
-    msg->is_dense = false;
-    for(int i=0; i<kp.size(); i++)
-    {
-    	unsigned short zt = depth.at<unsigned short>(kp[i].pt.y, kp[i].pt.x);
-      if(zt<MIN_DEPTH_MM ) continue;
-      double z = static_cast<double>(zt);
-    	double x = z * (kp[i].pt.x - cx) / fx;
-    	double y = z * (kp[i].pt.y - cy) / fy;
-      new_measurement_msg.position_x.push_back(x);
-      new_measurement_msg.position_y.push_back(z);
-      new_measurement_msg.position_signature.push_back(- y);
-      for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
-      new_measurement_msg.landmark_count++;
+  PointCloud::Ptr msg (new PointCloud);
+  msg->header.frame_id = "map";
+  msg->height = 1;
+  msg->width = kp.size();
+  msg->points.resize(msg->height * msg->width);
+  msg->is_dense = false;
+  for(int i=0; i<kp.size(); i++)
+  {
+  	unsigned short zt = depth.at<unsigned short>(kp[i].pt.y, kp[i].pt.x);
+    if(zt<MIN_DEPTH_MM ) continue;
+    double z = static_cast<double>(zt);
+  	double x = z * (kp[i].pt.x - cx) / fx;
+  	double y = z * (kp[i].pt.y - cy) / fy;
+    new_measurement_msg.position_x.push_back(x);
+    new_measurement_msg.position_y.push_back(z);
+    new_measurement_msg.position_signature.push_back(- y);
+    for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
+    new_measurement_msg.landmark_count++;
 
-      msg->points[i].x = x/1000.0;
-      msg->points[i].y = y/1000.0;
-      msg->points[i].z = z/1000.0;
-    }
-   	landmark_pub.publish(new_measurement_msg);
-    // std::cout<<msg->points.size()<<std::endl;
-    pcl_conversions::toPCL(ros::Time::now(), msg->header.stamp);
-    pcl_pub.publish(msg);
-    // std::cout<<new_measurement_msg.descriptor_mat.size()<<std::endl;
+    msg->points[i].x = x/1000.0;
+    msg->points[i].y = y/1000.0;
+    msg->points[i].z = z/1000.0;
+  }
+ 	landmark_pub.publish(new_measurement_msg);
+  // std::cout<<msg->points.size()<<std::endl;
+  pcl_conversions::toPCL(ros::Time::now(), msg->header.stamp);
+  pcl_pub.publish(msg);
+  // std::cout<<new_measurement_msg.descriptor_mat.size()<<std::endl;
 }
 
 void LandmarkExtractorNode::updateConfig(kinect_slam::LandmarkExtractorConfig &config, uint32_t level)
