@@ -185,17 +185,17 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
   std::vector<std::array<size_t, 3>> l_matches;
   std::vector<std::array<size_t, 3>> r_matches;
 
-  match(srcKeyPoints, srcDescriptors, destKeyPoints, destDescriptors, l_matches, max_signature_threshold, match_threshold);
-  match(destKeyPoints, destDescriptors, srcKeyPoints, srcDescriptors, r_matches, max_signature_threshold, match_threshold);
+  match(srcKeyPoints, srcDescriptors, destKeyPoints, destDescriptors, matches, max_signature_threshold, match_threshold);
+  // match(destKeyPoints, destDescriptors, srcKeyPoints, srcDescriptors, r_matches, max_signature_threshold, match_threshold);
 
-  for(int i=0; i<l_matches.size(); i++)
-  {
-    for(int j=0; j<r_matches.size(); j++)
-    {
-      if(l_matches[i][0] == r_matches[j][1] && l_matches[i][1] == r_matches[j][0])
-        matches.push_back(l_matches[i]);
-    }
-  }
+  // for(int i=0; i<l_matches.size(); i++)
+  // {
+  //   for(int j=0; j<r_matches.size(); j++)
+  //   {
+  //     if(l_matches[i][0] == r_matches[j][1] && l_matches[i][1] == r_matches[j][0])
+  //       matches.push_back(l_matches[i]);
+  //   }
+  // }
 }
 
 void EKF_SLAM::print_state()

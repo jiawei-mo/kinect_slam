@@ -45,7 +45,7 @@ void EKF_SLAM_Node::CtrlLmkCallback(const kinect_slam::PioneerVelControlConstPtr
   //std::cout<<matches.size()<<std::endl;
   bool flags[landmark_count];
   for(int i=0; i<landmark_count; i++) flags[i] = false;
-  std::cout<<"Total points: "<<landmark_count<<" Matched points: "<<matches.size()<<std::endl;
+  std::cout<<"Total points: "<<landmark_count<<" Matched points: "<<matches.size()<<" New points: "<<landmark_count-matches.size()<<std::endl;
   for(int i=0; i<matches.size(); i++)
   {
     flags[matches[i][0]] = true;
