@@ -14,10 +14,10 @@
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 LandmarkExtractorNode::LandmarkExtractorNode(): 
-  img_sub(nh, "/kinect2/qhd/image_color_rect", 1),
-  dep_sub(nh, "/kinect2/qhd/image_depth_rect", 1),
-	info_sub(nh, "/kinect2/qhd/camera_info", 1),
-	sync(img_sub, dep_sub, info_sub, 10)
+  img_sub(nh, "/camera/rgb/image_color", 1),
+  dep_sub(nh, "/camera/depth/image", 1),
+	info_sub(nh, "/camera/rgb/camera_info", 1),
+	sync(KinectSyncPolicy(10), img_sub, dep_sub, info_sub)
 {
   sync.registerCallback(boost::bind(&LandmarkExtractorNode::imageMessageCallback, this, _1, _2, _3));
   fd_ptr = boost::shared_ptr<HarrisDetector>(new HarrisDetector(7, 50, 50, 3, true, false, 7, 3));
