@@ -5,7 +5,7 @@
 HarrisDetector::HarrisDetector(int hws, float hrt, int hnp, int har, bool hff, bool haf, int hbs, int hbv)
 {
 	harris_window_size = hws*2+1;
-	harris_response_threshold = hrt;
+	harris_response_threshold = pow(10, hrt);
 	harris_number_of_points = hnp;
 	harris_anms_radius = har;
 	harris_fix_number_flag = hff;

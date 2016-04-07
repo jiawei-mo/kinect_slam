@@ -1,22 +1,24 @@
 #include "EKF_SLAM_Node.hpp"
 #include <iostream>
-EKF_SLAM_Node::EKF_SLAM_Node():
-	vel_sub(nh, "/control", 1),
-	lmk_sub(nh, "/landmarkWithDscrt", 1),
-	sync(vel_sub, lmk_sub, 10)
+EKF_SLAM_Node::EKF_SLAM_Node()
 {
-	sync.registerCallback(boost::bind(&EKF_SLAM_Node::CtrlLmkCallback, this, _1, _2));
+  vel_sub = nh.subscribe("/control", 1, &EKF_SLAM_Node::CtrlCallback, this);
+  lmk_sub = nh.subscribe("/landmarkWithDscrt", 1, &EKF_SLAM_Node::LmkCallback, this);
   slam_ptr = boost::shared_ptr<EKF_SLAM>(new EKF_SLAM());
 	f = boost::bind(&EKF_SLAM_Node::updateConfig, this, _1, _2);
   server.setCallback(f);
 }
 
-void EKF_SLAM_Node::CtrlLmkCallback(const kinect_slam::PioneerVelControlConstPtr& ctrl, const kinect_slam::LandmarkMsgConstPtr& lmk)
+void EKF_SLAM_Node::CtrlCallback(const kinect_slam::PioneerVelControlConstPtr& ctrl)
 {
-  //std::cout<<"start: "<<std::endl;
   double l_vel = ctrl->left_vel;
   double r_vel = ctrl->right_vel;
+  slam_ptr->predict(l_vel, r_vel);
+}
 
+void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
+{
+  //std::cout<<"start: "<<std::endl;
   int landmark_count = lmk->landmark_count;
   int descriptor_len = lmk->descriptor_len;
   Eigen::MatrixXd measurements(3,landmark_count);
@@ -38,7 +40,6 @@ void EKF_SLAM_Node::CtrlLmkCallback(const kinect_slam::PioneerVelControlConstPtr
     }
     descriptors.push_back(cur);
   }
-  slam_ptr->predict(l_vel, r_vel);
 
   std::vector<std::array<size_t, 3> > matches;
   slam_ptr->landmark_match(measurements, descriptors, matches, max_signature_threshold, match_threshold);

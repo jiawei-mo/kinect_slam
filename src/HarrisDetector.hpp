@@ -6,7 +6,7 @@
 class HarrisDetector
 {
 private:
-    double harris_response_threshold;
+    int harris_response_threshold;
     int harris_window_size;
     int harris_number_of_points;
     int harris_anms_radius;
