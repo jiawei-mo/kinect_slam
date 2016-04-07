@@ -70,5 +70,4 @@ void EKF_SLAM_Node::updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t le
 {
   max_signature_threshold = config.max_signature_threshold;
   match_threshold = config.match_threshold;
-  new_landmark_threshold = config.new_landmark_threshold;
 }
