@@ -17,7 +17,9 @@ class EKF_SLAM
 private: 
 	Eigen::VectorXd state_mean;
 	Eigen::MatrixXd state_cov;
+	Eigen::Matrix3d G_accu;
 
+	bool accu_flag;
 	int num_landmarks;
 	std::vector< boost::dynamic_bitset<> > descriptorDB;
 

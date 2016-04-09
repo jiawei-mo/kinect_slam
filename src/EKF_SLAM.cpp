@@ -4,6 +4,8 @@ EKF_SLAM::EKF_SLAM()
 {
 	state_mean = Eigen::Vector3d::Zero();
 	state_cov = Eigen::Matrix3d::Zero();
+	G_accu = Eigen::Matrix3d::Identity(3,3);
+	accu_flag = false;
 	num_landmarks = 0;
 }
 
@@ -11,6 +13,8 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 {
 	state_mean = _mean;
 	state_cov = _cov;
+	G_accu = Eigen::Matrix3d::Identity(3,3);
+	accu_flag = false;
 	num_landmarks = 0;
 }
 
@@ -66,6 +70,8 @@ void EKF_SLAM::predict(double l, double r)
 	cov_control << sigma_l, 0,
 								 0, sigma_r;
 	state_cov.block<3,3>(0,0) = G * state_cov.block<3,3>(0,0) * G.transpose() + V * cov_control * V.transpose();
+	G_accu = G * G_accu;
+	accu_flag = true;
 }
 
 void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitset<> dscrt)
@@ -88,6 +94,17 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 
 void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_idx)
 {
+	if(accu_flag)
+	{
+		//multiply G_accu into covariance
+		Eigen::MatrixXd Cov_update;
+		Cov_update = G_accu * state_cov.block(0,3,3,state_mean.rows()-3);
+		state_cov.block(0,3,3,state_mean.rows()-3) = Cov_update;
+		state_cov.block(3,0,state_mean.rows()-3,3) = Cov_update.transpose();
+		G_accu = Eigen::Matrix3d::Zero();
+		accu_flag = false;
+	}
+
 	//std::cout<<"start"<<std::endl;
 	Eigen::Matrix3d Q;
 	Q << KINECT_RANGE_VAR, 0, 0,
