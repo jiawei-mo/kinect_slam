@@ -9,10 +9,10 @@ EKF_SLAM_Node::EKF_SLAM_Node()
   server.setCallback(f);
 }
 
-void EKF_SLAM_Node::CtrlCallback(const kinect_slam::PioneerVelControlConstPtr& ctrl)
+void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::Twist::ConstPtr& ctrl)
 {
-  double l_vel = ctrl->left_vel;
-  double r_vel = ctrl->right_vel;
+  double l_vel = ctrl->linear.x;
+  double r_vel = ctrl->angular.z;
   slam_ptr->predict(l_vel, r_vel);
 }
 
