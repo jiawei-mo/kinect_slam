@@ -10,7 +10,8 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
 {
  if (msg.points[3].x>=OBSTACLE_FRONT && (msg.points[0].y<LEFT_AVAILABLE)) //no obstacle detected in the front and left not available
   {
-   myCtrl.go_straight();  
+   myCtrl.go_straight();
+   myCtrl.pose_correction();  
   }
   else
  {

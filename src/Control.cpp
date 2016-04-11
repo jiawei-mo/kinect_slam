@@ -1,5 +1,5 @@
 #include "Control.hpp"
-
+#include <cmath>
 void Control::go_straight()
 {
   ros::NodeHandle nh;
@@ -10,7 +10,7 @@ void Control::go_straight()
   double BASE_SPEED = 0.1, MOVE_TIME = 1.0, CLOCK_SPEED = 0.5;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
-
+  rate.reset();
   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
   {
       if (count == 0 || count == 1)
@@ -32,10 +32,10 @@ void Control::turn_left()
 	ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("RosAria/cmd_vel", 1);
   geometry_msgs::Twist msg;
 
-  double BASE_SPEED = 0.05, MOVE_TIME = 1, CLOCK_SPEED = 0.25, PI = 3.14159;
+  double BASE_SPEED = 0.05, MOVE_TIME = 1.0, CLOCK_SPEED = 0.25, PI = 3.14159;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
-
+  rate.reset();
   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED) //2
   {
       // Spin PI/2
@@ -79,7 +79,7 @@ void Control::turn_right()
   double BASE_SPEED = 0.05, MOVE_TIME = 1, CLOCK_SPEED = 0.25, PI = 3.14159;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
-
+  rate.reset();
   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
   {
       // Spin PI/2
@@ -104,4 +104,56 @@ void Control::turn_right()
       pub.publish(msg);
   }
   ROS_INFO_STREAM("The robot finished turning right for 90 degrees!");
+}
+
+void Control::pose_correction()
+{  
+  pose_correct=n.subscribe("kinect_slam/pose",1,&Control::poseMeassageReceived,this);
+}
+void Control::poseMeassageReceived(const geometry_msgs::Twist &msg)
+{
+  double BASE_SPEED = 0.1, MOVE_TIME = 1.0, CLOCK_SPEED = 0.5;
+  int count = 0;
+  ros::Rate rate(CLOCK_SPEED);
+  rate.reset();
+  double PI=3.14159;
+  double threshold=PI/20;
+  geometry_msgs::Twist correct;
+  ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
+  if (abs(0-msg.angular.z)<threshold)
+  {
+     if (msg.angular.z>=0)
+      correct.angular.z=(0-msg.angular.z)/int(MOVE_TIME/CLOCK_SPEED);
+    else
+      correct.angular.z=(msg.angular.z)/int(MOVE_TIME/CLOCK_SPEED);
+  }
+  if (abs(PI/2-msg.angular.z)<threshold)
+  {
+    if (msg.angular.z<=PI/2)
+      correct.angular.z=(PI/2-msg.angular.z)/int(MOVE_TIME/CLOCK_SPEED);
+    else
+      correct.angular.z=(-PI/2+msg.angular.z)/int(MOVE_TIME/CLOCK_SPEED);
+  }
+  if (abs(PI-abs(msg.angular.z))<threshold)
+  {
+    if (msg.angular.z>=0)
+      correct.angular.z=(PI-msg.angular.z)/int(MOVE_TIME/CLOCK_SPEED);
+    else
+      correct.angular.z=(-PI+abs(msg.angular.z))/int(MOVE_TIME/CLOCK_SPEED);
+  }
+  if (abs(-PI/2-msg.angular.z)<threshold)
+  {
+       correct.angular.z=(-PI/2+abs(msg.angular.z))/int(MOVE_TIME/CLOCK_SPEED);
+  }
+  while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
+   {
+    if (count == 0 || count == 1)
+     {
+      correct.linear.x = BASE_SPEED; //publish the new velocity to rosaria
+      pub.publish(correct);
+     }
+      count++;
+      ros::spinOnce();
+      rate.sleep();
+   }
 }
