@@ -28,40 +28,9 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel)
 	Eigen::Vector3d delta_state;
 	Eigen::Matrix3d G;
 	Eigen::MatrixXd V(3,2);
-/*
-	if(l != r)
-	{
-		double alpha = (r-l) / WHEEL_WIDTH;
-		double rad = l*WHEEL_WIDTH / (r-l);
-		delta_x = (rad + WHEEL_WIDTH/2)*(sin(state_mean(2)+alpha) - sin(state_mean(2)));
-		delta_y = (rad + WHEEL_WIDTH/2)*(-cos(state_mean(2)+alpha) + cos(state_mean(2)));
-		delta_theta = alpha;
-
-		G << 1, 0, (rad+WHEEL_WIDTH/2)*(cos(state_mean(2)+alpha) - cos(state_mean(2))),
-				 0, 1, (rad+WHEEL_WIDTH/2)*(sin(state_mean(2)+alpha) - sin(state_mean(2))),
-				 0, 0, 1;
-
-		V << (r*WHEEL_WIDTH)/(r-l)/(r-l) * (sin(state_mean(2)+alpha) - sin(state_mean(2))) - (l+r)/2/(r-l)*(cos(state_mean(2)+alpha)), (-l*WHEEL_WIDTH)/(r-l)/(r-l) * (sin(state_mean(2)+alpha) - sin(state_mean(2))) + (l+r)/2/(r-l)*(cos(state_mean(2)+alpha)),
-				 (r*WHEEL_WIDTH)/(r-l)/(r-l) * (-cos(state_mean(2)+alpha) + cos(state_mean(2))) - (l+r)/2/(r-l)*(sin(state_mean(2)+alpha)), (-l*WHEEL_WIDTH)/(r-l)/(r-l) * (-cos(state_mean(2)+alpha) + cos(state_mean(2))) + (l+r)/2/(r-l)*(sin(state_mean(2)+alpha)),
-				 -1/WHEEL_WIDTH, 1/WHEEL_WIDTH;
-	}
-	else		//l==r
-	{
-		delta_x = l*cos(state_mean(2));
-		delta_y = l*sin(state_mean(2));
-		delta_theta = 0;
-
-		G << 1, 0, - l * sin(state_mean(2)),
-				 0, 1, l * cos(state_mean(2)),
-				 0, 0, 1;
-
-		V << 0.5 * (cos(state_mean(2)) + l/WHEEL_WIDTH*sin(state_mean(2))), 0.5 * (cos(state_mean(2)) - l/WHEEL_WIDTH*sin(state_mean(2))),
-				 0.5 * (sin(state_mean(2)) - l/WHEEL_WIDTH*cos(state_mean(2))), 0.5 * (sin(state_mean(2)) + l/WHEEL_WIDTH*cos(state_mean(2))),
-				 -1/WHEEL_WIDTH, 1/WHEEL_WIDTH;
-	} */
-    
+	
     //Prediction based on linear velocity and angular velocity
-	if(angular_vel==0)
+	// if(angular_vel==0)
 	{
 		delta_x = linear_vel*cos(state_mean(2))*delta_t;
 		delta_y = linear_vel*sin(state_mean(2))*delta_t;
@@ -75,21 +44,21 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel)
 	        -sin(state_mean(2))*delta_t, 0,
 	        0, delta_t;
     }
-    else
-    {
-    	double radius = linear_vel / angular_vel;
-		delta_x = -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t);
-		delta_y = radius*cos(state_mean(2)) - radius*cos(state_mean(2)+angular_vel*delta_t);
-		delta_theta = angular_vel*delta_t;
+  //   else
+  //   {
+  //   	double radius = linear_vel / angular_vel;
+		// delta_x = -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t);
+		// delta_y = radius*cos(state_mean(2)) - radius*cos(state_mean(2)+angular_vel*delta_t);
+		// delta_theta = angular_vel*delta_t;
 
-	    G<< 1, 0, -radius*cos(state_mean(2)) + radius*cos(state_mean(2)+angular_vel*delta_t),
-	        0, 1, -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t),
-	        0, 0, 1;
+	 //    G<< 1, 0, -radius*cos(state_mean(2)) + radius*cos(state_mean(2)+angular_vel*delta_t),
+	 //        0, 1, -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t),
+	 //        0, 0, 1;
 		
-	    V<< (-sin(state_mean(2))+sin(state_mean(2)+angular_vel*delta_t))/angular_vel, radius/angular_vel*sin(state_mean(2))-radius/angular_vel*sin(state_mean(2)+angular_vel*delta_t)+radius*cos(state_mean(2)+angular_vel*delta_t)*delta_t,
-	        (cos(state_mean(2))-cos(state_mean(2)+angular_vel*delta_t))/angular_vel, -radius/angular_vel*cos(state_mean(2))+radius/angular_vel*cos(state_mean(2)+angular_vel*delta_t)+radius*sin(state_mean(2)+angular_vel*delta_t)*delta_t,
-	        0, delta_t;
-    }
+	 //    V<< (-sin(state_mean(2))+sin(state_mean(2)+angular_vel*delta_t))/angular_vel, radius/angular_vel*sin(state_mean(2))-radius/angular_vel*sin(state_mean(2)+angular_vel*delta_t)+radius*cos(state_mean(2)+angular_vel*delta_t)*delta_t,
+	 //        (cos(state_mean(2))-cos(state_mean(2)+angular_vel*delta_t))/angular_vel, -radius/angular_vel*cos(state_mean(2))+radius/angular_vel*cos(state_mean(2)+angular_vel*delta_t)+radius*sin(state_mean(2)+angular_vel*delta_t)*delta_t,
+	 //        0, delta_t;
+  //   }
 
 	delta_state << delta_x, 
 				   delta_y,
