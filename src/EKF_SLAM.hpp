@@ -21,6 +21,7 @@ private:
 
 	bool accu_flag;
 	int num_landmarks;
+	double delta_t; // define according to clock rate
 	std::vector< boost::dynamic_bitset<> > descriptorDB;
 
 public:

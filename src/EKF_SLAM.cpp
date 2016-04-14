@@ -7,6 +7,7 @@ EKF_SLAM::EKF_SLAM()
 	G_accu = Eigen::Matrix3d::Identity(3,3);
 	accu_flag = false;
 	num_landmarks = 0;
+	delta_t=0.25;
 }
 
 EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
@@ -19,7 +20,7 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 }
 
 //TODO
-void EKF_SLAM::predict(double l, double r)
+void EKF_SLAM::predict(double linear_vel, double angular_vel)
 {
 	double delta_x;
 	double delta_y;
@@ -27,7 +28,7 @@ void EKF_SLAM::predict(double l, double r)
 	Eigen::Vector3d delta_state;
 	Eigen::Matrix3d G;
 	Eigen::MatrixXd V(3,2);
-
+/*
 	if(l != r)
 	{
 		double alpha = (r-l) / WHEEL_WIDTH;
@@ -57,19 +58,35 @@ void EKF_SLAM::predict(double l, double r)
 		V << 0.5 * (cos(state_mean(2)) + l/WHEEL_WIDTH*sin(state_mean(2))), 0.5 * (cos(state_mean(2)) - l/WHEEL_WIDTH*sin(state_mean(2))),
 				 0.5 * (sin(state_mean(2)) - l/WHEEL_WIDTH*cos(state_mean(2))), 0.5 * (sin(state_mean(2)) + l/WHEEL_WIDTH*cos(state_mean(2))),
 				 -1/WHEEL_WIDTH, 1/WHEEL_WIDTH;
-	}
+	} */
+    
+    //Prediction based on linear velocity and angular velocity
+	delta_x = linear_vel*cos(state_mean(2))*delta_t;
+	delta_y = linear_vel*sin(state_mean(2))*delta_t;
+	delta_theta = angular_vel*delta_t;
+
+    G<< 1, 0, (-linear_vel*delta_t*sin(state_mean(2))),
+           0, 1, (linear_vel*delta_t*cos(state_mean(2))),
+           0, 0, 1;
+	
+    V<< -cos(state_mean(2))*delta_t, 0,
+           -sin(state_mean(2))*delta_t, 0,
+            0, -delta_t;
 
 	delta_state << delta_x, 
 								 delta_y,
 								 delta_theta;
 	state_mean.block<3,1>(0,0) += delta_state;
-
-	double sigma_l = (MOTION_FACTOR * l)*(MOTION_FACTOR * l) + (TURN_FACTOR *(r-l))*(TURN_FACTOR *(r-l));
-	double sigma_r = (MOTION_FACTOR * r)*(MOTION_FACTOR * r) + (TURN_FACTOR *(r-l))*(TURN_FACTOR *(r-l));
-
+    //TODO adjust the std of noise
+	//double sigma_l = (MOTION_FACTOR * l)*(MOTION_FACTOR * l) + (TURN_FACTOR *(r-l))*(TURN_FACTOR *(r-l));
+	//double sigma_r = (MOTION_FACTOR * r)*(MOTION_FACTOR * r) + (TURN_FACTOR *(r-l))*(TURN_FACTOR *(r-l));
+    double sigma_l =  0.01*linear_vel;
+    double sigma_r = 0.04*angular_vel; 
+	
 	Eigen::Matrix2d cov_control;
 	cov_control << sigma_l, 0,
 								 0, sigma_r;
+    
 	state_cov.block<3,3>(0,0) = G * state_cov.block<3,3>(0,0) * G.transpose() + V * cov_control * V.transpose();
 	G_accu = G * G_accu;
 	accu_flag = true;

@@ -3,6 +3,8 @@
 Control_Node::Control_Node()
 {
   turn_count = 0;
+  correct_count=0;
+  correction_threshold=2;
   sonar = nh.subscribe("RosAria/sonar",1, &Control_Node::sonarMeassageReceived, this);
 }
 
@@ -17,13 +19,15 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     action=system("rosrun kinect_slam turn_left");
    //myCtrl.go_straight();  
    turn_count++;
+   correct_count++;
   }
   if(msg.points[3].x<OBSTACLE_FRONT && msg.points[2].x>OBSTACLE_SIDES &&msg.points[1].x>OBSTACLE_SIDES) //avoid obstacle left
   {
    // myCtrl.turn_left();  
    //myCtrl.turn_right(); 
    action=system("rosrun kinect_slam turn_left");
-   action=system("rosrun kinect_slam turn_right"); 
+   action=system("rosrun kinect_slam turn_right");
+   correct_count++; 
   } 
   if(msg.points[3].x<OBSTACLE_FRONT && msg.points[4].x>OBSTACLE_SIDES &&msg.points[5].x>OBSTACLE_SIDES) //avoid obstacle left
   {
@@ -31,10 +35,14 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    //myCtrl.turn_left();  
     action=system("rosrun kinect_slam turn_right");
     action=system("rosrun kinect_slam turn_left");
+    correct_count++;
   }
    //if none of the situations above is satisfied, robot keep going straight and run pose correction
    myCtrl.go_straight();
-   //TODO
-   //myCtrl.pose_correction();
+   if(correct_count>=correction_threshold)
+   {
+       myCtrl.pose_correction();
+       correct_count=0;
+   }
    rate.sleep();
 }

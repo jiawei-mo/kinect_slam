@@ -19,6 +19,8 @@ private:
 	ros::Subscriber sonar;
 	Control myCtrl;
 	int turn_count;
+	int correct_count;
+	int correction_threshold;
 
 public:
 	Control_Node();
