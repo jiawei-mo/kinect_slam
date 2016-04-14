@@ -61,21 +61,39 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel)
 	} */
     
     //Prediction based on linear velocity and angular velocity
-	delta_x = linear_vel*cos(state_mean(2))*delta_t;
-	delta_y = linear_vel*sin(state_mean(2))*delta_t;
-	delta_theta = angular_vel*delta_t;
+	if(angular_vel==0)
+	{
+		delta_x = linear_vel*cos(state_mean(2))*delta_t;
+		delta_y = linear_vel*sin(state_mean(2))*delta_t;
+		delta_theta = angular_vel*delta_t;
 
-    G<< 1, 0, (-linear_vel*delta_t*sin(state_mean(2))),
-           0, 1, (linear_vel*delta_t*cos(state_mean(2))),
-           0, 0, 1;
-	
-    V<< -cos(state_mean(2))*delta_t, 0,
-           -sin(state_mean(2))*delta_t, 0,
-            0, -delta_t;
+	    G<< 1, 0, (-linear_vel*delta_t*sin(state_mean(2))),
+	        0, 1, (linear_vel*delta_t*cos(state_mean(2))),
+	        0, 0, 1;
+		
+	    V<< -cos(state_mean(2))*delta_t, 0,
+	        -sin(state_mean(2))*delta_t, 0,
+	        0, delta_t;
+    }
+    else
+    {
+    	double radius = linear_vel / angular_vel;
+		delta_x = -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t);
+		delta_y = radius*cos(state_mean(2)) - radius*cos(state_mean(2)+angular_vel*delta_t);
+		delta_theta = angular_vel*delta_t;
+
+	    G<< 1, 0, -radius*cos(state_mean(2)) + radius*cos(state_mean(2)+angular_vel*delta_t),
+	        0, 1, -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t),
+	        0, 0, 1;
+		
+	    V<< (-sin(state_mean(2))+sin(state_mean(2)+angular_vel*delta_t))/angular_vel, radius/angular_vel*sin(state_mean(2))-radius/angular_vel*sin(state_mean(2)+angular_vel*delta_t)+radius*cos(state_mean(2)+angular_vel*delta_t)*delta_t,
+	        (cos(state_mean(2))-cos(state_mean(2)+angular_vel*delta_t))/angular_vel, -radius/angular_vel*cos(state_mean(2))+radius/angular_vel*cos(state_mean(2)+angular_vel*delta_t)+radius*sin(state_mean(2)+angular_vel*delta_t)*delta_t,
+	        0, delta_t;
+    }
 
 	delta_state << delta_x, 
-								 delta_y,
-								 delta_theta;
+				   delta_y,
+				   delta_theta;
 	state_mean.block<3,1>(0,0) += delta_state;
     //TODO adjust the std of noise
 	//double sigma_l = (MOTION_FACTOR * l)*(MOTION_FACTOR * l) + (TURN_FACTOR *(r-l))*(TURN_FACTOR *(r-l));
