@@ -9,9 +9,9 @@ EKF_SLAM::EKF_SLAM()
 	num_landmarks = 0;
 	delta_t=0.25;
 
-	R << KINECT_X_VAR, 0, 0,
-	 0, KINECT_Y_VAR, 0,
-	 0, 0, KINECT_S_VAR;
+	R << KINECT_X_VAR*KINECT_X_VAR, 0, 0,
+	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
+	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 }
 
 EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
@@ -22,9 +22,9 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 	accu_flag = false;
 	num_landmarks = 0;
 
-	R << KINECT_X_VAR, 0, 0,
-	 0, KINECT_Y_VAR, 0,
-	 0, 0, KINECT_S_VAR;
+	R << KINECT_X_VAR*KINECT_X_VAR, 0, 0,
+	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
+	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 }
 
 //TODO
@@ -72,15 +72,12 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel)
 				   delta_y,
 				   delta_theta;
 	state_mean.block<3,1>(0,0) += delta_state;
-    //TODO adjust the std of noise
-	//double sigma_l = (MOTION_FACTOR * l)*(MOTION_FACTOR * l) + (TURN_FACTOR *(r-l))*(TURN_FACTOR *(r-l));
-	//double sigma_r = (MOTION_FACTOR * r)*(MOTION_FACTOR * r) + (TURN_FACTOR *(r-l))*(TURN_FACTOR *(r-l));
-    double sigma_l =  0.01*linear_vel;
-    double sigma_r = 0.04*angular_vel; 
+    double sigma_l =  MOTION_FACTOR*linear_vel;
+    double sigma_r = TURN_FACTOR*angular_vel; 
 	
 	Eigen::Matrix2d cov_control;
-	cov_control << sigma_l, 0,
-				   0, sigma_r;
+	cov_control << sigma_l*sigma_l, 0,
+				   0, sigma_r*sigma_r;
     
 	state_cov.block<3,3>(0,0) = G * state_cov.block<3,3>(0,0) * G.transpose() + V * cov_control * V.transpose();
 	G_accu = G * G_accu;
