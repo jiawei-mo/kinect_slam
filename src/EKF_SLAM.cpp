@@ -8,6 +8,10 @@ EKF_SLAM::EKF_SLAM()
 	accu_flag = false;
 	num_landmarks = 0;
 	delta_t=0.25;
+
+	R << KINECT_X_VAR, 0, 0,
+	 0, KINECT_Y_VAR, 0,
+	 0, 0, KINECT_S_VAR;
 }
 
 EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
@@ -17,6 +21,10 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 	G_accu = Eigen::Matrix3d::Identity(3,3);
 	accu_flag = false;
 	num_landmarks = 0;
+
+	R << KINECT_X_VAR, 0, 0,
+	 0, KINECT_Y_VAR, 0,
+	 0, 0, KINECT_S_VAR;
 }
 
 //TODO
@@ -72,7 +80,7 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel)
 	
 	Eigen::Matrix2d cov_control;
 	cov_control << sigma_l, 0,
-								 0, sigma_r;
+				   0, sigma_r;
     
 	state_cov.block<3,3>(0,0) = G * state_cov.block<3,3>(0,0) * G.transpose() + V * cov_control * V.transpose();
 	G_accu = G * G_accu;
@@ -84,14 +92,30 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 	int former_length = state_mean.rows();
 
 	state_mean.conservativeResize(former_length+3);
-	state_mean(former_length) = x;
-	state_mean(former_length+1) = y;
+	state_mean(former_length) = state_mean(0) + x*cos(state_mean(2)) - y*sin(state_mean(2));
+	state_mean(former_length+1) = state_mean(1) + x*sin(state_mean(2)) + y*cos(state_mean(2));
 	state_mean(former_length+2) = sig;
 
 	state_cov.conservativeResize(former_length+3, former_length+3);
-	state_cov(former_length, former_length) = INFINITE_COV;
-	state_cov(former_length+1, former_length+1) = INFINITE_COV;
-	state_cov(former_length+2, former_length+2) = INFINITE_COV;
+	Eigen::MatrixXd H_Li, H_R;
+	H_R = Eigen::MatrixXd::Zero(3,3);
+	H_Li = Eigen::MatrixXd::Zero(3,3);
+	H_R(0,0) = -cos(state_mean(2)); 
+	H_R(0,1) = -sin(state_mean(2)); 
+	H_R(1,0) =  sin(state_mean(2)); 
+	H_R(1,1) = -cos(state_mean(2)); 
+	H_R(0,2) =  y; 
+	H_R(1,2) = -x; 
+	H_Li(0,3) =  cos(state_mean(2)); 
+	H_Li(0,4) =  sin(state_mean(2)); 
+	H_Li(1,3) = -sin(state_mean(2)); 
+	H_Li(1,4) =  cos(state_mean(2));
+	H_Li(2,5) = 1;
+	Eigen::MatrixXd _HHP = -H_Li.transpose()*H_R*state_cov.block(0,0,3,former_length);
+	Eigen::MatrixXd HHPH_RH = H_Li.transpose()*(H_R*state_cov.block<3,3>(0,0)*H_R.transpose() + R)*H_Li;
+	state_cov.block(former_length,0,3,former_length) = _HHP;
+	state_cov.block(0,former_length,former_length,3) = _HHP.transpose();
+	state_cov.block<3,3>(former_length,former_length) = HHPH_RH;
 
 	descriptorDB.push_back(dscrt);
 	num_landmarks++;
@@ -111,20 +135,13 @@ void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_i
 	}
 
 	//std::cout<<"start"<<std::endl;
-	Eigen::Matrix3d Q;
-	Q << KINECT_RANGE_VAR, 0, 0,
-			 0, KINECT_BARING_VAR, 0,
-			 0, 0, KINECT_DEPTH_VAR;
 
-	double x_kinect = state_mean(0) + KINECT_DISP * cos(state_mean(2));
-	double y_kinect = state_mean(1) + KINECT_DISP * sin(state_mean(2));
-	double q_x = state_mean(3+landmark_idx*3) - x_kinect;
-	double q_y = state_mean(3+landmark_idx*3+1) - y_kinect;
-	double q = q_x*q_x + q_y*q_y;
+	double q_x =  (state_mean(3+landmark_idx*3) - state_mean(0))*cos(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*sin(state_mean(2));
+	double q_y = -(state_mean(3+landmark_idx*3) - state_mean(0))*sin(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*cos(state_mean(2));
 	Eigen::Vector3d _measurement;
-	_measurement << sqrt(q),
-									atan2(q_y, q_x) - state_mean(2),
-									state_mean(3+landmark_idx*3+2);
+	_measurement << q_x,
+					q_y,
+					state_mean(3+landmark_idx*3+2);
 
 	Eigen::MatrixXd F;
 	F = Eigen::MatrixXd::Zero(6, state_mean.rows());
@@ -137,22 +154,22 @@ void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_i
 
 	Eigen::MatrixXd H_reduced, H;
 	H_reduced = Eigen::MatrixXd::Zero(3,6);
-	H_reduced(0,0) = -sqrt(q)*q_x; 
-	H_reduced(0,1) = -sqrt(q)*q_y; 
-	H_reduced(0,3) = sqrt(q)*q_x; 
-	H_reduced(0,4) = sqrt(q)*q_y; 
-	H_reduced(1,0) = q_y; 
-	H_reduced(1,1) = -q_x; 
-	H_reduced(1,2) = -q; 
-	H_reduced(1,3) = -q_y; 
-	H_reduced(1,4) = q_x; 
-	H_reduced(2,5) = q;
-	H_reduced = H_reduced / q;
+	H_reduced(0,0) = -cos(state_mean(2)); 
+	H_reduced(0,1) = -sin(state_mean(2)); 
+	H_reduced(1,0) =  sin(state_mean(2)); 
+	H_reduced(1,1) = -cos(state_mean(2)); 
+	H_reduced(0,2) =  q_y; 
+	H_reduced(1,2) = -q_x; 
+	H_reduced(0,3) =  cos(state_mean(2)); 
+	H_reduced(0,4) =  sin(state_mean(2)); 
+	H_reduced(1,3) = -sin(state_mean(2)); 
+	H_reduced(1,4) =  cos(state_mean(2));
+	H_reduced(2,5) = 1;
 
 	H = H_reduced*F;
 
 	//std::cout<<"before inverse"<<std::endl;
-	Eigen::MatrixXd S = H*state_cov*H.transpose()+Q;
+	Eigen::MatrixXd S = H*state_cov*H.transpose()+R;
 	Eigen::MatrixXd K = state_cov * H.transpose() * S.inverse();
 	//std::cout<<"after inverse"<<std::endl;
 	state_mean += K*(measurement - _measurement);
