@@ -2,7 +2,7 @@
 #include <dynamic_reconfigure/server.h>
 #include "EKF_SLAM.hpp"
 #include "kinect_slam/EKFSLAMConfig.h"
-#include "geometry_msgs/Twist.h"
+#include "nav_msgs/Odometry.h"
 #include "kinect_slam/LandmarkMsg.h"
 
 typedef boost::shared_ptr<kinect_slam::LandmarkMsg const> LandmarkMsgConstPtr;
@@ -25,6 +25,6 @@ public:
 	EKF_SLAM_Node();
 	~EKF_SLAM_Node(){};
 	void updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t level);
-	void CtrlCallback(const geometry_msgs::Twist::ConstPtr& ctrl);
+	void CtrlCallback(const nav_msgs::Odometry::ConstPtr& ctrl);
 	void LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk);
 };

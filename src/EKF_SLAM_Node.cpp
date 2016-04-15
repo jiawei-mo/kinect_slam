@@ -2,17 +2,17 @@
 #include <iostream>
 EKF_SLAM_Node::EKF_SLAM_Node()
 {
-  vel_sub = nh.subscribe("/control", 1, &EKF_SLAM_Node::CtrlCallback, this);
+  vel_sub = nh.subscribe("/pose", 1, &EKF_SLAM_Node::CtrlCallback, this);
   lmk_sub = nh.subscribe("/landmarkWithDscrt", 1, &EKF_SLAM_Node::LmkCallback, this);
   slam_ptr = boost::shared_ptr<EKF_SLAM>(new EKF_SLAM());
 	f = boost::bind(&EKF_SLAM_Node::updateConfig, this, _1, _2);
   server.setCallback(f);
 }
 
-void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::Twist::ConstPtr& ctrl)
+void EKF_SLAM_Node::CtrlCallback(const nav_msgs::Odometry::ConstPtr& ctrl)
 {
-  double l_vel = ctrl->linear.x;
-  double r_vel = ctrl->angular.z;
+  double l_vel = ctrl->twist.twist.linear.x;
+  double r_vel = ctrl->twist.twist.angular.z;
   slam_ptr->predict(l_vel, r_vel);
 }
 

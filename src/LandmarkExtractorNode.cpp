@@ -93,9 +93,9 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
     double z = static_cast<double>(zt);
   	double x = z * (kp[i].pt.x - cx) / fx;
   	double y = z * (kp[i].pt.y - cy) / fy;
-    new_measurement_msg.position_x.push_back(x);
-    new_measurement_msg.position_y.push_back(z);
-    new_measurement_msg.position_signature.push_back(- y);
+    new_measurement_msg.position_x.push_back(z);
+    new_measurement_msg.position_y.push_back(-x);
+    new_measurement_msg.position_signature.push_back(-y);
     for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
     new_measurement_msg.landmark_count++;
 
