@@ -52,7 +52,7 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel)
 		
 	    V<< -cos(state_mean(2))*delta_t, 0,
 	        -sin(state_mean(2))*delta_t, 0,
-	        0, delta_t;
+	        0, -delta_t;
     }
   //   else
   //   {
