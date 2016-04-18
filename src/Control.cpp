@@ -8,7 +8,7 @@ void Control::go_straight()
   ros::Publisher velocity =nh.advertise<geometry_msgs::Twist>("/control",1);
   geometry_msgs::Twist msg;
 
-  double BASE_SPEED = 0.1, MOVE_TIME = 3, CLOCK_SPEED = 0.5;
+  double BASE_SPEED = 0.2, MOVE_TIME = 3, CLOCK_SPEED = 0.5;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   rate.reset();

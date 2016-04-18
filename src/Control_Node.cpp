@@ -10,7 +10,7 @@ Control_Node::Control_Node()
 
 void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
 {
-  double CLOCK_SPEED=3;
+  double CLOCK_SPEED=0.25;
   ros::Rate rate(CLOCK_SPEED);
   char action;
   if(msg.points[0].y>=LEFT_AVAILABLE) 
@@ -38,7 +38,8 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     correct_count++;
   }
    //if none of the situations above is satisfied, robot keep going straight and run pose correction
-   myCtrl.go_straight();
+   //myCtrl.go_straight();
+   action = system("rosrun kinect_slam go_straight");
    if(correct_count>=correction_threshold)
    {
        myCtrl.pose_correction();

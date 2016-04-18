@@ -10,7 +10,7 @@
 #define OBSTACLE_FRONT 2
 #define OBSTACLE_SIDES 3
 #define LEFT_AVAILABLE 3
-#define LEFT_AVAILABLE_SIDES 4
+#define LEFT_AVAILABLE_SIDES 3
 
 class Control_Node
 {
