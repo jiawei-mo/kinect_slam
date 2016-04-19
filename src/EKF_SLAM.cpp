@@ -121,6 +121,7 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 	num_landmarks++;
 }
 
+/* EKF SLAM update */
 void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_idx)
 {
 	// std::cout<<"Update"<<std::endl;
