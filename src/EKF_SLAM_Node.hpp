@@ -4,6 +4,7 @@
 #include "kinect_slam/EKFSLAMConfig.h"
 #include "nav_msgs/Odometry.h"
 #include "kinect_slam/LandmarkMsg.h"
+#include <geometry_msgs/TwistStamped.h>
 
 typedef boost::shared_ptr<kinect_slam::LandmarkMsg const> LandmarkMsgConstPtr;
 
@@ -20,11 +21,13 @@ private:
 
   double max_signature_threshold;
   double match_threshold;
+  double pre_time_stamp;
 
 public:
 	EKF_SLAM_Node();
 	~EKF_SLAM_Node(){};
 	void updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t level);
-	void CtrlCallback(const nav_msgs::Odometry::ConstPtr& ctrl);
+	//void CtrlCallback(const nav_msgs::Odometry::ConstPtr& ctrl);
+	void CtrlCallback(const geometry_msgs::TwistStamped &ctrl);
 	void LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk);
 };

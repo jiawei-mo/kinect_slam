@@ -2,19 +2,28 @@
 #include <iostream>
 EKF_SLAM_Node::EKF_SLAM_Node()
 {
-  vel_sub = nh.subscribe("/control", 1, &EKF_SLAM_Node::CtrlCallback, this);
-  lmk_sub = nh.subscribe("/landmarkWithDscrt", 1, &EKF_SLAM_Node::LmkCallback, this);
+  pre_time_stamp=ros::Time::now().toSec();
+  vel_sub = nh.subscribe("/control", 1, &EKF_SLAM_Node::CtrlCallback,this);
+  lmk_sub = nh.subscribe("/landmarkWithDscrt", 1, &EKF_SLAM_Node::LmkCallback,this);
   slam_ptr = boost::shared_ptr<EKF_SLAM>(new EKF_SLAM());
 	f = boost::bind(&EKF_SLAM_Node::updateConfig, this, _1, _2);
   server.setCallback(f);
 }
 
 //for propagation
-void EKF_SLAM_Node::CtrlCallback(const nav_msgs::Odometry::ConstPtr& ctrl)
+void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
 {
-  double l_vel = ctrl->twist.twist.linear.x;
-  double r_vel = ctrl->twist.twist.angular.z;
-  slam_ptr->predict(l_vel, r_vel);
+  double l_vel = ctrl.twist.linear.x;
+  double r_vel = ctrl.twist.angular.z;
+  double current_time_stamp = ctrl.header.stamp.sec;
+  double delta_t = current_time_stamp - pre_time_stamp;
+  if (current_time_stamp!=0)
+  {
+    ROS_INFO_STREAM("Control data receieved");
+    std::cout<<"Delta_T is  "<<delta_t<<"s\n";
+  }
+  slam_ptr->predict(l_vel, r_vel, delta_t);
+  pre_time_stamp = current_time_stamp;
 }
 
 //for update
