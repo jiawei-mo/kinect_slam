@@ -12,6 +12,8 @@ EKF_SLAM::EKF_SLAM()
 	R << KINECT_X_VAR*KINECT_X_VAR, 0, 0,
 	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
+
+	 robot_state_pub = nh.advertise<geometry_msgs::Pose2D>("pose", 50);
 }
 
 EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
@@ -25,10 +27,13 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 	R << KINECT_X_VAR*KINECT_X_VAR, 0, 0,
 	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
+
+	robot_state_pub = nh.advertise<geometry_msgs::Pose2D>("pose", 50);
+
 }
 
 //TODO
-void EKF_SLAM::predict(double linear_vel, double angular_vel)
+void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 {
 	// std::cout<<"Prediction: Vel: "<<linear_vel<<" Rot: "<<angular_vel<<std::endl; 
 	// std::cout<<"Before: "<<std::endl<<state_mean.block<3,1>(0,0)<<std::endl;
@@ -124,6 +129,12 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 /* EKF SLAM update */
 void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_idx)
 {
+	geometry_msgs::Pose2D cur_state;
+
+	cur_state.x = state_mean(0);
+	cur_state.y = state_mean(1);
+	cur_state.theta = state_mean(2);
+	robot_state_pub.publish(cur_state);
 	// std::cout<<"Update"<<std::endl;
 	if(accu_flag)
 	{
