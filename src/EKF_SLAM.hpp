@@ -10,6 +10,7 @@
 #define KINECT_S_VAR 0.7
 #define MOTION_FACTOR 0.01
 #define TURN_FACTOR 0.04
+#define PI 3.1415926
 
 class EKF_SLAM
 {
@@ -26,6 +27,7 @@ private:
 
 	ros::NodeHandle nh;
 	ros::Publisher robot_state_pub;
+	ros::Publisher test_propagation;
 
 public:
 	EKF_SLAM();

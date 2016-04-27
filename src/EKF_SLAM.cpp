@@ -79,6 +79,10 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 				   delta_y,
 				   delta_theta;
 	state_mean.block<3,1>(0,0) += delta_state;
+	if(state_mean(2)>=2*PI)
+	{
+		state_mean(2)=state_mean(2)-2*PI;
+	}
     double sigma_l =  MOTION_FACTOR*linear_vel;
     double sigma_r = TURN_FACTOR*angular_vel; 
 	
@@ -90,6 +94,13 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	G_accu = G * G_accu;
 	accu_flag = true;
 	// std::cout<<"After: "<<std::endl<<state_mean.block<3,1>(0,0)<<std::endl;
+
+	//test_prediction
+	geometry_msgs::Pose2D test_pose;
+	test_propagation = nh.advertise<geometry_msgs::Pose2D>("/test_pose",10);
+	test_pose.x = state_mean(0);
+	test_pose.y = state_mean(1);
+	test_pose.theta = state_mean(2);
 }
 
 void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitset<> dscrt)
