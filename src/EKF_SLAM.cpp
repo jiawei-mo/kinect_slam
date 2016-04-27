@@ -127,7 +127,7 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 }
 
 /* EKF SLAM update */
-void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_idx)
+void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd measurements_idx)
 {
 	geometry_msgs::Pose2D cur_state;
 
@@ -148,44 +148,52 @@ void EKF_SLAM::measurement_update(Eigen::Vector3d measurement, size_t landmark_i
 	}
 
 	//std::cout<<"start"<<std::endl;
+	int mm_count = measurements_idx.rows();
+	Eigen::MatrixXd H_accu(3*mm_count, state_mean.rows());
+	Eigen::MatrixXd R_accu(3*mm_count, 3*mm_count);
+	Eigen::VectorXd _measurement(3*mm_count);
+	for(int mm_i=0; mm_i<mm_count; mm_i++)
+	{
+		int landmark_idx = measurements_idx(mm_i);	
+		double q_x =  (state_mean(3+landmark_idx*3) - state_mean(0))*cos(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*sin(state_mean(2)) - KINECT_DISP;
+		double q_y = -(state_mean(3+landmark_idx*3) - state_mean(0))*sin(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*cos(state_mean(2));
+		_measurement(3*mm_i)=q_x;
+		_measurement(3*mm_i+1)=q_y;
+		_measurement(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
+						
 
-	double q_x =  (state_mean(3+landmark_idx*3) - state_mean(0))*cos(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*sin(state_mean(2)) - KINECT_DISP;
-	double q_y = -(state_mean(3+landmark_idx*3) - state_mean(0))*sin(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*cos(state_mean(2));
-	Eigen::Vector3d _measurement;
-	_measurement << q_x,
-					q_y,
-					state_mean(3+landmark_idx*3+2);
+		Eigen::MatrixXd F;
+		F = Eigen::MatrixXd::Zero(6, state_mean.rows());
+		F(0,0) = 1;
+		F(1,1) = 1;
+		F(2,2) = 1;
+		F(3,3+landmark_idx*3) = 1;
+		F(4,3+landmark_idx*3+1) = 1;
+		F(5,3+landmark_idx*3+2) = 1;
 
-	Eigen::MatrixXd F;
-	F = Eigen::MatrixXd::Zero(6, state_mean.rows());
-	F(0,0) = 1;
-	F(1,1) = 1;
-	F(2,2) = 1;
-	F(3,3+landmark_idx*3) = 1;
-	F(4,3+landmark_idx*3+1) = 1;
-	F(5,3+landmark_idx*3+2) = 1;
+		Eigen::MatrixXd H_reduced, HRHi;
+		H_reduced = Eigen::MatrixXd::Zero(3,6);
+		H_reduced(0,0) = -cos(state_mean(2)); 
+		H_reduced(0,1) = -sin(state_mean(2)); 
+		H_reduced(1,0) =  sin(state_mean(2)); 
+		H_reduced(1,1) = -cos(state_mean(2)); 
+		H_reduced(0,2) =  q_y; 
+		H_reduced(1,2) = -q_x; 
+		H_reduced(0,3) =  cos(state_mean(2)); 
+		H_reduced(0,4) =  sin(state_mean(2)); 
+		H_reduced(1,3) = -sin(state_mean(2)); 
+		H_reduced(1,4) =  cos(state_mean(2));
+		H_reduced(2,5) = 1;
 
-	Eigen::MatrixXd H_reduced, H;
-	H_reduced = Eigen::MatrixXd::Zero(3,6);
-	H_reduced(0,0) = -cos(state_mean(2)); 
-	H_reduced(0,1) = -sin(state_mean(2)); 
-	H_reduced(1,0) =  sin(state_mean(2)); 
-	H_reduced(1,1) = -cos(state_mean(2)); 
-	H_reduced(0,2) =  q_y; 
-	H_reduced(1,2) = -q_x; 
-	H_reduced(0,3) =  cos(state_mean(2)); 
-	H_reduced(0,4) =  sin(state_mean(2)); 
-	H_reduced(1,3) = -sin(state_mean(2)); 
-	H_reduced(1,4) =  cos(state_mean(2));
-	H_reduced(2,5) = 1;
-
-	H = H_reduced*F;
-
+		HRHi = H_reduced*F;
+		H_accu.block(3*mm_i, 0, 3, state_mean.rows()) = HRHi;
+		R_accu.block(3*mm_i, 3*mm_i, 3, 3) = R;
+	}
 	//std::cout<<"before inverse"<<std::endl;
-	Eigen::MatrixXd S = H*state_cov*H.transpose()+R;
-	Eigen::MatrixXd K = state_cov * H.transpose() * S.inverse();
+	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
+	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
 	//std::cout<<"after inverse"<<std::endl;
-	state_mean += K*(measurement - _measurement);
+	state_mean += K*(measurements - _measurement);
 	//std::cout<<"mean update"<<std::endl;
 	state_cov = state_cov - K*S*K.transpose();
 	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
