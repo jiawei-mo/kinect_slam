@@ -27,7 +27,6 @@ private:
 
 	ros::NodeHandle nh;
 	ros::Publisher robot_state_pub;
-	ros::Publisher test_propagation;
 
 public:
 	EKF_SLAM();

@@ -14,6 +14,7 @@ EKF_SLAM::EKF_SLAM()
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
 	 robot_state_pub = nh.advertise<geometry_msgs::Pose2D>("pose", 50);
+
 }
 
 EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
@@ -97,10 +98,10 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 
 	//test_prediction
 	geometry_msgs::Pose2D test_pose;
-	test_propagation = nh.advertise<geometry_msgs::Pose2D>("/test_pose",10);
 	test_pose.x = state_mean(0);
 	test_pose.y = state_mean(1);
 	test_pose.theta = state_mean(2);
+    robot_state_pub.publish(test_pose);
 }
 
 void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitset<> dscrt)
