@@ -14,7 +14,8 @@ private:
 	ros::NodeHandle nh;
 	ros::Subscriber vel_sub;
 	ros::Subscriber lmk_sub;
-
+    ros::Subscriber repub_sub;
+    
 	boost::shared_ptr<EKF_SLAM> slam_ptr;
 	dynamic_reconfigure::Server<kinect_slam::EKFSLAMConfig> server;
 	dynamic_reconfigure::Server<kinect_slam::EKFSLAMConfig>::CallbackType f;
@@ -27,7 +28,7 @@ public:
 	EKF_SLAM_Node();
 	~EKF_SLAM_Node(){};
 	void updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t level);
-	//void CtrlCallback(const nav_msgs::Odometry::ConstPtr& ctrl);
+	void Ctrl_republish(const geometry_msgs::TwistStamped &ctrl);
 	void CtrlCallback(const geometry_msgs::TwistStamped &ctrl);
 	void LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk);
 };

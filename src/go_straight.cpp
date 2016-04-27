@@ -13,7 +13,7 @@ int main(int argc, char **argv)
   geometry_msgs::Twist msg;
   geometry_msgs::TwistStamped msg_pub;
  // std_msgs::Time current;
-  double BASE_SPEED = 0.2, MOVE_TIME = 1.5, CLOCK_SPEED = 0.5;
+  double BASE_SPEED = 0.2, MOVE_TIME = 0.75, CLOCK_SPEED = 0.25;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
 
@@ -32,13 +32,13 @@ int main(int argc, char **argv)
 	  {
 	    msg.linear.x = BASE_SPEED; //publish the new velocity to rosaria
       msg_pub.twist=msg;
-      msg_pub.header.stamp.sec = ros::Time::now().toSec();
       //current.sec=ros::Time::now().toSec();
 	    pub.publish(msg);
-      control.publish(msg_pub);
      // _time.publish(current);
 
 	  }
+      msg_pub.header.stamp.sec = ros::Time::now().toSec();
+      control.publish(msg_pub);
       ROS_INFO_STREAM("The robot is now moving forward!");
       count++;
       ros::spinOnce();

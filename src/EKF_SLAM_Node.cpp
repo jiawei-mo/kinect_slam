@@ -3,7 +3,8 @@
 EKF_SLAM_Node::EKF_SLAM_Node()
 {
   pre_time_stamp=ros::Time::now().toSec();
-  vel_sub = nh.subscribe("/control", 1, &EKF_SLAM_Node::CtrlCallback,this);
+  repub_sub = nh.subscribe("/control", 1, &EKF_SLAM_Node::Ctrl_republish,this);
+  vel_sub = nh.subscribe("/control_repub", 1, &EKF_SLAM_Node::CtrlCallback,this);
   lmk_sub = nh.subscribe("/landmarkWithDscrt", 1, &EKF_SLAM_Node::LmkCallback,this);
   slam_ptr = boost::shared_ptr<EKF_SLAM>(new EKF_SLAM());
 	f = boost::bind(&EKF_SLAM_Node::updateConfig, this, _1, _2);
@@ -24,6 +25,22 @@ void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
   }
   slam_ptr->predict(l_vel, r_vel, delta_t);
   pre_time_stamp = current_time_stamp;
+}
+
+void EKF_SLAM_Node::Ctrl_republish(const geometry_msgs::TwistStamped& ctrl)
+{
+  ros::Publisher repub=nh.advertise<geometry_msgs::TwistStamped>("/control_repub",1);
+  geometry_msgs::TwistStamped msg_pub;
+  double CLOCK_SPEED = 20;
+  ros::Rate rate(CLOCK_SPEED);
+  msg_pub.twist=ctrl.twist;
+  while(ros::ok())
+  {
+    msg_pub.header.stamp.sec=ros::Time::now().toSec();
+    repub.publish(msg_pub);
+    ros::spinOnce();
+    rate.sleep();
+  }
 }
 
 //for update
