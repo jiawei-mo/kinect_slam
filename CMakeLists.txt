@@ -36,6 +36,7 @@ add_executable(landmark_node src/LandmarkExtractorNode_main.cpp src/LandmarkExtr
 add_executable(control_node src/control_main.cpp src/Control_Node.cpp src/Control.cpp)
 add_executable(turn_left src/turn_left.cpp)
 add_executable(turn_right src/turn_right.cpp)
+add_executable(go_straight src/go_straight.cpp)
 
 add_dependencies(slam_node ${PROJECT_NAME}_gencfg)
 add_dependencies(landmark_node ${PROJECT_NAME}_gencfg)
@@ -48,6 +49,7 @@ target_link_libraries(landmark_node ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 target_link_libraries(control_node ${catkin_LIBRARIES})
 target_link_libraries(turn_left ${catkin_LIBRARIES})
 target_link_libraries(turn_right ${catkin_LIBRARIES})
+target_link_libraries(go_straight ${catkin_LIBRARIES})
 
 generate_messages(
   DEPENDENCIES geometry_msgs std_msgs
