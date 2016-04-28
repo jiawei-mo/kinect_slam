@@ -5,7 +5,7 @@ Control_Node::Control_Node()
   turn_count = 0;
   correct_count=0;
   correction_threshold=2;
-  sonar = nh.subscribe("RosAria/sonar",1, &Control_Node::sonarMeassageReceived, this);
+  sonar = nh.subscribe("RosAria/sonar",1, &Control_Node::sonarMeassageReceived,this);
 }
 
 void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)

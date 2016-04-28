@@ -6,6 +6,7 @@
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/PointCloud.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/TwistStamped.h>
 #include "Control.hpp"
 #define OBSTACLE_FRONT 2
 #define OBSTACLE_SIDES 3
@@ -15,7 +16,7 @@
 class Control_Node
 {
 private:
-  ros::NodeHandle nh;
+    ros::NodeHandle nh;
 	ros::Subscriber sonar;
 	Control myCtrl;
 	int turn_count;
