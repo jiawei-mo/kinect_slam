@@ -25,8 +25,8 @@ void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
   double delta_t = current_time_stamp - pre_time_stamp;
   if (current_time_stamp!=0)
   {
-    ROS_INFO_STREAM("Control data receieved");
-    std::cout<<"Delta_T is  "<<delta_t<<"s\n";
+    // ROS_INFO_STREAM("Control data receieved");
+    // std::cout<<"Delta_T is  "<<delta_t<<"s\n";
   }
   slam_ptr->predict(l_vel, r_vel, delta_t);
   pre_time_stamp = current_time_stamp;
@@ -99,7 +99,7 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
     matched_idx(i) = matches[i][1];
   }
 
-  slam_ptr->measurement_update(matched_measurement, matched_idx); /* add the landmark to the H stack */
+  // slam_ptr->measurement_update(matched_measurement, matched_idx); /* add the landmark to the H stack */
 
 
   /* New landmarks are added to the history of landmarks */
