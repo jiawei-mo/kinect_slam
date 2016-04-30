@@ -15,6 +15,7 @@ private:
 	ros::Subscriber vel_sub;
 	ros::Subscriber lmk_sub;
     ros::Subscriber repub_sub;
+    ros::Subscriber get_ini_time;
     
 	boost::shared_ptr<EKF_SLAM> slam_ptr;
 	dynamic_reconfigure::Server<kinect_slam::EKFSLAMConfig> server;
@@ -23,7 +24,6 @@ private:
   double max_signature_threshold;
   double match_threshold;
   double pre_time_stamp;
-
 public:
 	EKF_SLAM_Node();
 	~EKF_SLAM_Node(){};

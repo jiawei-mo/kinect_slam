@@ -2,7 +2,8 @@
 #include <iostream>
 EKF_SLAM_Node::EKF_SLAM_Node()
 {
-  pre_time_stamp=ros::Time::now().toSec();
+  pre_time_stamp=-1;
+ // get_ini_time = nh.subscribe("/ini_time",1, &EKF_SLAM_Node::Initialize_Time_Recieved,this);
   repub_sub = nh.subscribe("/control", 1, &EKF_SLAM_Node::Ctrl_republish,this);
   vel_sub = nh.subscribe("/control_repub", 1, &EKF_SLAM_Node::CtrlCallback,this);
   lmk_sub = nh.subscribe("/landmarkWithDscrt", 1, &EKF_SLAM_Node::LmkCallback,this);
@@ -14,6 +15,10 @@ EKF_SLAM_Node::EKF_SLAM_Node()
 //for propagation
 void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
 {
+  if(pre_time_stamp==-1)
+  {
+    pre_time_stamp=ros::Time::now().toSec();
+  }
   double l_vel = ctrl.twist.linear.x;
   double r_vel = ctrl.twist.angular.z;
   double current_time_stamp = ctrl.header.stamp.sec;
