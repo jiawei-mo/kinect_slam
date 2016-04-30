@@ -33,7 +33,7 @@ void Control::poseMeassageReceived(const geometry_msgs::Pose2D &msg)
   {
       correct.angular.z=(PI-msg.theta)/int(MOVE_TIME/CLOCK_SPEED);
   }
-  if (abs((3*PI/2-msg.theta)<threshold)
+  if (abs((3*PI/2-msg.theta)<threshold))
   {
        correct.angular.z=(3*PI/2-msg.theta)/int(MOVE_TIME/CLOCK_SPEED);
   }
