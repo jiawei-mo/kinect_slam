@@ -2,6 +2,15 @@
 
 Control_Node::Control_Node()
 {
+  double ini_CLOCK_SPEED=1;
+  double Initialization_time=6;
+  double ini_count=0;
+  ros::Rate ini_rate(ini_CLOCK_SPEED);
+  while (ros::ok() && ini_count<Initialization_time)
+  {
+    ini_count++;
+    ini_rate.sleep();
+  }
   turn_count = 0;
   correct_count=0;
   correction_threshold=2;
@@ -17,6 +26,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   { 
     //myCtrl.turn_left();
     action=system("rosrun kinect_slam turn_left");
+    action = system("rosrun kinect_slam go_straight");
    //myCtrl.go_straight();  
    turn_count++;
    correct_count++;
