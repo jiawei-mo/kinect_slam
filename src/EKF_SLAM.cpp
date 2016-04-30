@@ -92,6 +92,7 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 				   0, sigma_r*sigma_r;
     
 	state_cov.block<3,3>(0,0) = G * state_cov.block<3,3>(0,0) * G.transpose() + V * cov_control * V.transpose();
+	state_cov.block<3,3>(0,0) = (state_cov.block<3,3>(0,0) + state_cov.block<3,3>(0,0).transpose()) / 2;
 	G_accu = G * G_accu;
 	accu_flag = true;
 	// std::cout<<"After: "<<std::endl<<state_mean.block<3,1>(0,0)<<std::endl;
@@ -141,12 +142,6 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 /* EKF SLAM update */
 void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd measurements_idx)
 {
-	geometry_msgs::Pose2D cur_state;
-
-	cur_state.x = state_mean(0);
-	cur_state.y = state_mean(1);
-	cur_state.theta = state_mean(2);
-	robot_state_pub.publish(cur_state);
 	// std::cout<<"Update"<<std::endl;
 	if(accu_flag)
 	{
@@ -206,10 +201,21 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
 	//std::cout<<"after inverse"<<std::endl;
 	state_mean += K*(measurements - _measurement);
+	if(state_mean(2)>=2*PI)
+	{
+		state_mean(2)=state_mean(2)-2*PI;
+	}
 	//std::cout<<"mean update"<<std::endl;
 	state_cov = state_cov - K*S*K.transpose();
+	state_cov = (state_cov + state_cov.transpose()) / 2;
 	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
 	//std::cout<<"end"<<std::endl;
+	geometry_msgs::Pose2D cur_state;
+
+	cur_state.x = state_mean(0);
+	cur_state.y = state_mean(1);
+	cur_state.theta = state_mean(2);
+	robot_state_pub.publish(cur_state);
 }
 
 void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<std::array<size_t, 3> >& matches, double max_signature_threshold, double match_threshold)
