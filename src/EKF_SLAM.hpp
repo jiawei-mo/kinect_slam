@@ -4,7 +4,7 @@
 #include <math.h> 
 #include <boost/dynamic_bitset.hpp>
 #include <geometry_msgs/Pose2D.h>
-#define KINECT_DISP 0.7
+#define KINECT_DISP 0.07	//measured
 #define KINECT_X_VAR 0.7	
 #define KINECT_Y_VAR 0.7
 #define KINECT_S_VAR 0.7
