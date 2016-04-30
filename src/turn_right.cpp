@@ -13,7 +13,7 @@ int main(int argc, char **argv)
   geometry_msgs::Twist msg;
   geometry_msgs::TwistStamped msg_pub;
   //std_msgs::Time current;
-  double BASE_SPEED = 0.05, MOVE_TIME = 1, CLOCK_SPEED = 0.25, PI = 3.14159; //1 && 0.25
+  double BASE_SPEED = 0.1, MOVE_TIME = 4, CLOCK_SPEED = 1, PI = 3.14159; //1 && 0.25
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
 
@@ -31,8 +31,9 @@ int main(int argc, char **argv)
       if (count == 0 || count == 1)
 	    {
          msg.linear.x = BASE_SPEED;
-	       msg.angular.z = -1 * PI/ int(MOVE_TIME/CLOCK_SPEED) / 2;
+	       msg.angular.z = -1 * PI/2;// int(MOVE_TIME/CLOCK_SPEED) / 2;
          msg_pub.twist=msg;
+         msg_pub.twist.angular.z= msg_pub.twist.angular.z/3;
          //current.sec = ros::Time::now().toSec();
 	       pub.publish(msg);
          //_time.publish(current);

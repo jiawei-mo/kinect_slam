@@ -6,11 +6,12 @@ Control_Node::Control_Node()
   double Initialization_time=6;
   double ini_count=0;
   ros::Rate ini_rate(ini_CLOCK_SPEED);
-  while (ros::ok() && ini_count<Initialization_time)
+  /*while (ros::ok() && ini_count<Initialization_time)
   {
     ini_count++;
     ini_rate.sleep();
   }
+  */
   turn_count = 0;
   correct_count=0;
   correction_threshold=1;
@@ -19,7 +20,7 @@ Control_Node::Control_Node()
 
 void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
 {
-  double CLOCK_SPEED=0.25;
+  double CLOCK_SPEED=1;
   ros::Rate rate(CLOCK_SPEED);
   char action;
   if(msg.points[0].y>=LEFT_AVAILABLE) 
