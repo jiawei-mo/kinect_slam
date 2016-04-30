@@ -17,28 +17,28 @@ void Control::poseMeassageReceived(const geometry_msgs::Pose2D &msg)
   geometry_msgs::TwistStamped correct_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
   ros::Publisher velocity =n.advertise<geometry_msgs::TwistStamped>("/control",1);
-  if (abs(0-msg.theta)<threshold)
+  if (abs(0-msg.theta)>threshold)
   {
      if (msg.theta>=0)
       correct.angular.z=(0-msg.theta)/int(MOVE_TIME/CLOCK_SPEED);
     else
       correct.angular.z=(msg.theta)/int(MOVE_TIME/CLOCK_SPEED);
   }
-  if (abs(PI/2-msg.theta)<threshold)
+  if (abs(PI/2-msg.theta)>threshold)
   {
     if (msg.theta<=PI/2)
       correct.angular.z=(PI/2-msg.theta)/int(MOVE_TIME/CLOCK_SPEED);
     else
       correct.angular.z=(-PI/2+msg.theta)/int(MOVE_TIME/CLOCK_SPEED);
   }
-  if (abs(PI-abs(msg.theta))<threshold)
+  if (abs(PI-abs(msg.theta))>threshold)
   {
     if (msg.theta>=0)
       correct.angular.z=(PI-msg.theta)/int(MOVE_TIME/CLOCK_SPEED);
     else
       correct.angular.z=(-PI+abs(msg.theta))/int(MOVE_TIME/CLOCK_SPEED);
   }
-  if (abs(-PI/2-msg.theta)<threshold)
+  if (abs(-PI/2-msg.theta)>threshold)
   {
        correct.angular.z=(-PI/2+abs(msg.theta))/int(MOVE_TIME/CLOCK_SPEED);
   }

@@ -8,8 +8,8 @@
 #define KINECT_X_VAR 0.7	
 #define KINECT_Y_VAR 0.7
 #define KINECT_S_VAR 0.7
-#define MOTION_FACTOR 0.01
-#define TURN_FACTOR 0.04
+#define MOTION_FACTOR 1	
+#define TURN_FACTOR 1
 #define PI 3.1415926
 
 class EKF_SLAM

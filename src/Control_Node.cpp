@@ -2,7 +2,7 @@
 
 Control_Node::Control_Node()
 {
-  double ini_CLOCK_SPEED=1;
+ /* double ini_CLOCK_SPEED=1;
   double Initialization_time=6;
   double ini_count=0;
   ros::Rate ini_rate(ini_CLOCK_SPEED);
@@ -10,7 +10,7 @@ Control_Node::Control_Node()
   {
     ini_count++;
     ini_rate.sleep();
-  }
+  }*/
   turn_count = 0;
   correct_count=0;
   correction_threshold=2;
