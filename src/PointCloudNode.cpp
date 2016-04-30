@@ -1,39 +1,102 @@
-#inlcude "PointCloudNode.hpp"
-
+#include "PointCloudNode.hpp"
 
 
 PointCloudNode::PointCloudNode():
-	img_sub(nh, "/camera/depth_registered/points", 1),
-	sync(KinectSyncPolicy(10), img_sub)
+	//img_sub(nh, "/camera/depth_registered/points", 1), // from pioneer
+	img_sub(nh, "/camera/rgb/image_color", 1), // for simulation
+	dep_sub(nh, "/camera/depth/image", 1),
+	//info_sub(nh, "/camera/rgb/camera_info", 1),
+	info_sub(nh, "/camera/depth/camera_info", 1),
+	sync(KinectSyncPolicy(10), img_sub, dep_sub, info_sub)
 {
+	//sync.registerCallback(boost::bind(&PointCloudNode::pcl_callback, this, _1, _2, _3));
+	sync.registerCallback(boost::abind(&PointCloudNode::sim_pcl_callback, this, _1, _2, _3));
 	// state mean
 	state_mean = Eigen::Vector3d::Zero();
+	init_pose = Eigen::Vector3d::Zero();
 	// point cloud size
 	cloud_sz = 0;
+	// number of images received from kinect
+	num_frames = 0;
 	// initialize point cloud
 	cloud = PointCloudPtr(new PointCloud());
-	// subscribe to the point cloud data stream
-	//ros::Subscriber points_sub = nh.subscribe("/camera/depth_registered/points", 1, &PointCloudNode::pcl_callback, this);
 
 	// subscribe to the robot state data stream
-	ros::Subscriber state_sub = nh.subscribe("pose", 1, &PointCloudNode::state_callback, this);
-
-	// octomap can be done just by publishing pointcloud2...
-	//ros::Publisher pcl_pub = nh.advertise<sensor_msgs::PointCloud2> ("filtered_pcl", 1);
-
-	octomap::ColorOcTree tree( 0.1 );
+	//state_sub = nh.subscribe("pose", 1, &PointCloudNode::state_callback, this);
+	state_sub = nh.subscribe("pose", 1, &PointCloudNode::sim_state_callback, this);
 }
 
 
+void PointCloudNode::sim_pcl_callback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
+{
+	cv::Mat image_color = cv_bridge::toCvCopy(img)->image;
+	cv::Mat image_depth = cv_bridge::toCvCopy(dep)->image;
+	cv::patchNaNs(image_depth, 0.0);
 
-void PointCloudNode::pcl_callback(const sensor_msgs::PointCloud2ConstPtr& pcl_msg)
+	// verify the color looks legitimate
+	/*
+	try {
+		cv::imshow("color", image_color);
+		cv::waitKey(1);
+	} catch (cv_bridge::Exception& e) {
+		ROS_ERROR("Could not convert from '%s' to 'bgr8'.", img->encoding.c_str());
+	}
+	*/
+
+	// verify the depth looks legitimate
+	/*
+	try {
+		double min1, max1;
+		cv::minMaxIdx(image_depth, &min1, &max1);
+		cv::imshow("depth", image_depth/max1);
+		cv::waitKey(1);
+	} catch (cv_bridge::Exception& e) {
+		ROS_ERROR("Could not convert from '%s' to 'bgr8'.", img->encoding.c_str());
+	}
+	*/
+
+
+	// get camera intrinsics
+	float fx = info->K[0];
+	float fy = info->K[4];
+	float cx = info->K[2];
+	float cy = info->K[5];
+
+	// produce a point cloud
+	PointCloudPtr pointcloud_msg (new PointCloud);
+	//pointcloud_msg->header = dep->header;
+	Point pt;
+	for (int y = 0; y < image_color.rows; y+=5) {
+		for (int x = 0; x < image_color.cols; x+=5) {
+			float depth = image_depth.at<short int>(cv::Point(x,y)) / 1000.0;
+			cv::Vec3b color = image_color.at<cv::Vec3b>(cv::Point(x,y));
+			if (depth > 0.0) {
+				pt.x = (x - cx) * depth / fx;
+				pt.y = (y - cy) * depth / fy;
+				pt.z = depth;
+				pt.rgb = (int)color[0] << 16 | (int)color[1] << 8 | (int)color[2];
+				pointcloud_msg->points.push_back(pt);
+			}
+		}
+	}
+	pointcloud_msg->height = 1;
+	pointcloud_msg->width = pointcloud_msg->points.size();
+	num_frames++;
+	cloud_append(pointcloud_msg);
+	//voxel_filter(cloud, 1.0);
+	build_octomap();
+
+}
+
+
+void PointCloudNode::pcl_callback(const sensor_msgs::PointCloud2ConstPtr& pcl_msg, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
 {
 	// add points in message to the point cloud attribute
 	// first convert to pcl object
 	pcl::PCLPointCloud2::Ptr pcl_obj;
 	pcl_conversions::toPCL(*pcl_msg, *pcl_obj);
 	// then to a point cloud
-	PointCloudPtr new_cloud (new PointCloud());;
+	PointCloudPtr new_cloud (new PointCloud());
 	pcl::fromPCLPointCloud2(*pcl_obj, *new_cloud);
 
 	// add to data
@@ -53,6 +116,28 @@ void PointCloudNode::pcl_callback(const sensor_msgs::PointCloud2ConstPtr& pcl_ms
 }
 
 
+void PointCloudNode::sim_state_callback(const nav_msgs::Odometry::ConstPtr& msg)
+{
+	// read in the pose information and save it in state_mean
+	float x = msg->pose.pose.position.x;
+	float y = msg->pose.pose.position.y;
+
+	tf::Pose pose;
+	tf::poseMsgToTF(msg->pose.pose, pose);
+	double th = tf::getYaw(pose.getRotation());
+	//float th = msg->pose.pose.orientation.z;
+
+	state_mean << x,
+				  y,
+				  (float)th;
+	if (init_pose.isZero(0) && init_pose.isZero(1) && init_pose.isZero(2)) {
+		std::cout << "Setting init pose:" << endl;
+		init_pose = state_mean;
+		std::cout << init_pose << endl;
+	}
+	std::cout << "X: " << x << ", Y: " << y << " Th: " << th << std::endl;
+}
+
 void PointCloudNode::state_callback(const geometry_msgs::Pose2D& pose_msg)
 {
 	// read in the pose information and save it in state_mean
@@ -68,41 +153,87 @@ void PointCloudNode::state_callback(const geometry_msgs::Pose2D& pose_msg)
 
 void PointCloudNode::build_octomap()
 {
-	// convert poi
+	octomap::ColorOcTree tree(0.25);
 
 	//octomap::Pointcloud oct_pc;
 	//octomap::point3d sensor_origin(0.0f,0.0f,0.0f);
 
 	for(pcl::PointCloud<pcl::PointXYZRGB>::iterator it = cloud->begin(); it != cloud->end(); it++) {
-		//octomap::point3d new_pt ((float) it->x, (float) it->y, (float) it->z);
-		//oct_pc.push_back(new_pt);
-		tree.updateNode(new_pt, true);
-		tree.integrateNodeColor( it->x, it->y, it->z, it->r, it->g, it->b );
+		float x=it->x, y=it->y, z=it->z;
+		uint8_t r=it->r, g=it->g, b=it->b;
+		tree.updateNode((double)x, (double)y, (double)z, true);
+		tree.integrateNodeColor(x, y, z, r, g, b);
 	}
 	//tree.insertPointCloud(oct_pc, sensor_origin, -1, false, false);
 
-    //tree.write("my_octree.ot");
-    tree.writeBinary("my_octree.bt");
+    tree.write("my_octree.ot");
+    //tree.writeBinary("my_octree.bt");
+    //octomath::Pose6D origin(0,0,0,0,0,0);
+    //octomap::MapNode<octomap::octree> octomap(tree,origin);
+	//octomap.writeMap(newfileName);
 }
 
 
 PointCloudPtr PointCloudNode::to_global(PointCloudPtr new_cloud)
 {
 	// this just implements a specific transformation using transform_cloud
-	float dx = state_mean(0);
-	float dy = state_mean(1);
-	float theta = state_mean(2);
-	PointCloudPtr new_global = transform_cloud(new_cloud, dx, dy, 0.0, theta);
+	// point cloud should already be aligned to robot frame
+
+	/*
+	// ROBOTS XYZ may be different than image XYZ!!!!
+	// rotate about robot z then robot x
+	float img_dx = state_mean(1) - init_pose(1);
+	float img_dy = 0.0;
+	float img_dz = state_mean(0) - init_pose(0);
+	float img_dth = state_mean(2) - init_pose(2);
+	PointCloudPtr new_global = transform_cloud(new_cloud, img_dx, img_dy, img_dz, img_dth, "z");
+	*/
+
+	float dx = state_mean(0) - init_pose(0);
+	float dy = state_mean(1) - init_pose(1);
+	float theta = state_mean(2) - init_pose(2);
+	PointCloudPtr new_global = transform_cloud(new_cloud, dx, dy, 0.0, theta, "z");
+
 	return new_global;
 }
 
 void PointCloudNode::cloud_append(PointCloudPtr new_cloud)
 {
 	// remove some of the new points that are very far away, or super close
-	PointCloudPtr new_filtered = pt_filter(new_cloud, "z", 0.1, 3.0); // keep pts with depth 0.1m to 3m
+	//PointCloudPtr new_filtered = pt_filter(new_cloud, "z", 0.1, 3.0); // keep pts with depth 0.1m to 3m
 
-	// first need to do some transformations in here involving state mean
-	PointCloudPtr new_global = to_global(new_filtered);
+	// Create the filtering object
+	PointCloudPtr cloud_filtered (new PointCloud());
+	pcl::StatisticalOutlierRemoval<Point> sor;
+	sor.setInputCloud(new_cloud);
+	sor.setMeanK (25);
+	sor.setStddevMulThresh (1.0);
+	sor.filter (*cloud_filtered);
+
+	// first orient the new cloud so that it's in the robot frame
+	// i.e. the image-z (depth) corresponds to robot-x
+	// the image-y (rows) corresponds to robots-z
+	// the image x (cols) corresponds to robots-y
+	PointCloudPtr tmp = transform_cloud(cloud_filtered, 0.0,0.0,0.0, PI/2.0, "y");
+	PointCloudPtr new_robot = transform_cloud(tmp, 0.0,0.0,0.0, PI/2.0, "x");
+
+
+	// next, transform into global frame based on new robot state
+	PointCloudPtr new_global = to_global(new_robot);
+
+	/*
+	// ICP alginment of clouds
+	pcl::IterativeClosestPoint<Point, Point> icp;
+	icp.setInputSource(cloud);
+	icp.setInputTarget(new_cloud);
+	PointCloudPtr tmp (new PointCloud());
+	icp.align(*tmp);
+	std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+	icp.getFitnessScore() << std::endl;
+	std::cout << icp.getFinalTransformation() << std::endl;
+	cloud = tmp;
+	num_frames++;
+	*/
 
 	// once in global each new point add to cloud
 	size_t num_points = new_global->points.size();
@@ -111,12 +242,13 @@ void PointCloudNode::cloud_append(PointCloudPtr new_cloud)
 		pt.x = new_global->points[i].x;
 		pt.y = new_global->points[i].y;
 		pt.z = new_global->points[i].z;
-		pt.rgb = new_global->points[i].rgb;
 
 		// save to PointCloudNode attribute
 		cloud->points.push_back(pt);
 		cloud_sz++;
 	}
+	num_frames++;
+
 }
 
 
@@ -234,15 +366,23 @@ void PointCloudNode::visualize_cloud(PointCloudPtr cloud)
 }
 
 PointCloudPtr PointCloudNode::transform_cloud(PointCloudPtr cloud,
-	float dx=0.0, float dy=0.0, float dz=0.0, float theta=0.0)
+	float dx=0.0, float dy=0.0, float dz=0.0, float theta=0.0, const std::string axis="z")
 {
-	// TODO create option to specify the axis of rotation
 	// create transformation matrix
 	Eigen::Affine3f T = Eigen::Affine3f::Identity();
 	T.translation() << dx, dy, dz;
 	if (theta != 0.0) {
-		T.rotate (Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
+		if (axis == "x") {
+			T.rotate (Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitX()));
+		} else if (axis == "y") {
+			T.rotate (Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitY()));
+		} else {
+			// assume z
+			T.rotate (Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
+		}
 	}
+	//std::cout << "rotation matrix: " << std::endl;
+	//std::cout << T.matrix() << std::endl;
 	PointCloudPtr rval (new pcl::PointCloud<pcl::PointXYZRGB> ());
 	pcl::transformPointCloud (*cloud, *rval, T);
 	return rval;
