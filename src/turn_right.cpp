@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   }
   
     // Stop the spin
-  for(int i = 0; i < 2; i++)
+ /* for(int i = 0; i < 2; i++)
   {
       msg.angular.x = 0;
       msg.angular.y = 0;
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
       msg_pub.header.stamp.sec=ros::Time::now().toSec();
       pub.publish(msg);
       control.publish(msg_pub);
-  }
+  }*/
   ROS_INFO_STREAM("The robot finished turning right for 90 degrees!");
    
 }
