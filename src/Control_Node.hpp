@@ -12,22 +12,25 @@
 #define OBSTACLE_SIDES 3
 #define LEFT_AVAILABLE 5 //3
 #define LEFT_AVAILABLE_SIDES 3
-#define ALERT_DISTANCE 0.25
 
 class Control_Node
 {
 private:
     ros::NodeHandle nh;
 	ros::Subscriber sonar;
+	ros::Subscriber pose_correct;
 	Control myCtrl;
 	int turn_count;
 	int correct_count;
 	double distance_maintain;
     double correction_threshold;
     double turn_time;
+    double correct_time;
+    double current_theta;
    // double pre_sonar;
 public:
 	Control_Node();
 	~Control_Node(){};
 	void sonarMeassageReceived(const sensor_msgs::PointCloud &msg);
+	void poseMeassageReceived(const geometry_msgs::Pose2D &msg);
 };

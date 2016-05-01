@@ -7,6 +7,7 @@ Control_Node::Control_Node()
   double ini_count=0;
   // ros::Rate ini_rate(ini_CLOCK_SPEED);
   turn_time=ros::Time::now().toSec();
+  correct_time=ros::Time::now().toSec();
   /*while (ros::ok() && ini_count<Initialization_time)
   {
     ini_count++;
@@ -18,13 +19,14 @@ Control_Node::Control_Node()
   distance_maintain=0.8;
   correction_threshold=0.1;
   sonar = nh.subscribe("RosAria/sonar",1, &Control_Node::sonarMeassageReceived,this);
+  pose_correct=nh.subscribe("/pose",1, &Control_Node::poseMeassageReceived,this);
 }
 
 void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
 {
   char action;
   double current_time=ros::Time::now().toSec();
-  if(msg.points[0].y>=LEFT_AVAILABLE && current_time-turn_time>30) 
+  if(msg.points[0].y>=LEFT_AVAILABLE && current_time-turn_time>0) 
   { 
     //myCtrl.turn_left();
     action=system("rosrun kinect_slam turn_left");
@@ -50,47 +52,19 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     action=system("rosrun kinect_slam turn_left");
     correct_count++;
   }
-   //if none of the situations above is satisfied, robot keep going straight and run pose correction
-   //myCtrl.go_straight();
-   if(msg.points[0].y>(distance_maintain+correction_threshold)) //right drift
-   {
-       if (msg.points[0].y<=ALERT_DISTANCE)
-       {
-        action=system("rosrun kinect_slam pose_correction_left");
-        action=system("rosrun kinect_slam pose_correction_left");
-        action=system("rosrun kinect_slam pose_correction_left");
-        action=system("rosrun kinect_slam pose_correction_right");
-        action=system("rosrun kinect_slam pose_correction_right");
-        action=system("rosrun kinect_slam pose_correction_right");
-       }
-       else
-       {
-        action=system("rosrun kinect_slam pose_correction_left");
-        action=system("rosrun kinect_slam pose_correction_right");
-       }
-       //action = system("rosrun kinect_slam go_straight");
-   }
-   else if(msg.points[0].y<(distance_maintain-correction_threshold)) //left drift
-   {
-       if(abs(msg.points[6].y)<ALERT_DISTANCE)
-       {
-         action=system("rosrun kinect_slam pose_correction_right");
-         action=system("rosrun kinect_slam pose_correction_right");
-         action=system("rosrun kinect_slam pose_correction_right");
-         action=system("rosrun kinect_slam pose_correction_left");
-         action=system("rosrun kinect_slam pose_correction_left");
-         action=system("rosrun kinect_slam pose_correction_left");
-       }
-       else
-       {
-        action=system("rosrun kinect_slam pose_correction_right");
-        action=system("rosrun kinect_slam pose_correction_left");
-       }      
-       // action = system("rosrun kinect_slam go_straight");
-      // action=system("rosrun kinect_slam spose_correction_left");
-   }
-   else
-   {
-        action = system("rosrun kinect_slam go_straight");
-   }
+//pose correction using EKF estimation
+  double correct_current_time=ros::Time::now().toSec();
+    if (correct_count>0 || correct_time-correct_current_time>15)
+    {
+      myCtrl.pose_correction(current_theta);
+      correct_count=0;
+      correct_time=correct_current_time;
+    }
+    ///////////////////////////////////////////////////
+    action = system("rosrun kinect_slam go_straight");
+}
+
+void Control_Node::poseMeassageReceived(const geometry_msgs::Pose2D &msg)
+{
+  current_theta=msg.theta;
 }

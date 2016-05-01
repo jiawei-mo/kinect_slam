@@ -5,9 +5,7 @@
 class Control
 {
 public:
-	void pose_correction();
+	void pose_correction(double theta);
 private:
 	ros::NodeHandle n;
-	ros::Subscriber pose_correct;
-	void poseMeassageReceived(const geometry_msgs::Pose2D &msg);
 };

@@ -13,7 +13,7 @@ int main(int argc, char **argv)
   geometry_msgs::Twist msg;
   geometry_msgs::TwistStamped msg_pub;
  // std_msgs::Time current;
-  double BASE_SPEED = 0.2, MOVE_TIME = 4, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.1, MOVE_TIME = 4, CLOCK_SPEED = 1;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
 
