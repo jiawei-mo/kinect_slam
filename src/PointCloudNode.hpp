@@ -29,7 +29,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <tf/transform_datatypes.h>
 #include <string>
-#include "kinect_slam/Pose2dMsg.h"
+#include "kinect_slam/Pose2DMsg.h"
 
 
 #define PI 3.14159265
@@ -46,9 +46,9 @@ typedef pcl::PointXYZ Point;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudPtr;
 typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Image, sensor_msgs::CameraInfo> SimulationPolicy;
-typedef message_filters::sync_policies::ApproximateTime<kinect_slam::Pose2dMsg, sensor_msgs::Image, sensor_msgs::CameraInfo> PioneerPolicy;
+typedef message_filters::sync_policies::ApproximateTime<kinect_slam::Pose2DMsg, sensor_msgs::Image, sensor_msgs::CameraInfo> PioneerPolicy;
 
-typedef boost::shared_ptr<kinect_slam::Pose2dMsg const> Pose2DMsgConstPtr;
+typedef boost::shared_ptr<kinect_slam::Pose2DMsg const> Pose2DMsgConstPtr;
 
 class PointCloudNode
 {

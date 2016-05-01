@@ -63,6 +63,11 @@ target_link_libraries(turn_left ${catkin_LIBRARIES})
 target_link_libraries(turn_right ${catkin_LIBRARIES})
 target_link_libraries(pc_node ${OpenCV_LIBRARIES} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
 
+
+add_dependencies(pc_node kinect_slam_generate_messages_cpp)
+add_dependencies(slam_node kinect_slam_generate_messages_cpp)
+
+
 generate_messages(
   DEPENDENCIES geometry_msgs std_msgs
 )

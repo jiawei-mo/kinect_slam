@@ -1,20 +1,21 @@
 #include "ros/ros.h"
 #include <Eigen/LU>
 #include <Eigen/Core>
-#include <math.h> 
+#include <math.h>
 #include <boost/dynamic_bitset.hpp>
-#include <geometry_msgs/Pose2D.h>
+//#include <geometry_msgs/Pose2D.h>
+#include "kinect_slam/Pose2DMsg.h"
 #define KINECT_DISP 0.07	//measured
-#define KINECT_X_VAR 0.7	
+#define KINECT_X_VAR 0.7
 #define KINECT_Y_VAR 0.7
 #define KINECT_S_VAR 0.7
-#define MOTION_FACTOR 1	
+#define MOTION_FACTOR 1
 #define TURN_FACTOR 1
 #define PI 3.1415926
 
 class EKF_SLAM
 {
-private: 
+private:
 	Eigen::VectorXd state_mean;
 	Eigen::MatrixXd state_cov;
 

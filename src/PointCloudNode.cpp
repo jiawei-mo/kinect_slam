@@ -87,9 +87,9 @@ void PointCloudNode::simulation_callback(const nav_msgs::Odometry::ConstPtr& sta
 void PointCloudNode::pioneer_callback(const kinect_slam::Pose2DMsgConstPtr& state_msg, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
 {
 	// PROCESS STATE ESTIAMATE MESSAGE
-	float x = state_msg.x;
-	float y = state_msg.y;
-	float th = state_msg.theta;
+	float x = state_msg->x;
+	float y = state_msg->y;
+	float th = state_msg->theta;
 
 	state_mean << x,
 				  y,
