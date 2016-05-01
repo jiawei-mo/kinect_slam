@@ -29,15 +29,26 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <tf/transform_datatypes.h>
 #include <string>
-
+#include "kinect_slam/Pose2dMsg.h"
 
 
 #define PI 3.14159265
 
-typedef pcl::PointXYZRGB Point;
-typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
-typedef pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudPtr;
-typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo> KinectSyncPolicy;
+// types for color clouds
+//typedef pcl::PointXYZRGB Point;
+//typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
+//typedef pcl::PointCloud<pcl::PointXYZRGB>::Ptr PointCloudPtr;
+//typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo> KinectSyncPolicy;
+
+
+// types for non colour
+typedef pcl::PointXYZ Point;
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudPtr;
+typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Image, sensor_msgs::CameraInfo> SimulationPolicy;
+typedef message_filters::sync_policies::ApproximateTime<kinect_slam::Pose2dMsg, sensor_msgs::Image, sensor_msgs::CameraInfo> PioneerPolicy;
+
+typedef boost::shared_ptr<kinect_slam::Pose2dMsg const> Pose2DMsgConstPtr;
 
 class PointCloudNode
 {
@@ -49,39 +60,51 @@ private:
 	Eigen::Vector3d init_pose;
 
 	ros::NodeHandle nh;
-	ros::Subscriber state_sub;
 
-	message_filters::Subscriber<sensor_msgs::Image> img_sub;
 	message_filters::Subscriber<sensor_msgs::Image> dep_sub;
 	message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub;
-	message_filters::Synchronizer<KinectSyncPolicy> sync;
+
+	message_filters::Subscriber<kinect_slam::Pose2DMsg> pioneer_sub; // pioneer state
+	message_filters::Synchronizer<PioneerPolicy> pioneer_sync;
+
+	//message_filters::Subscriber<nav_msgs::Odometry> simulation_sub;
+	//age_filters::Synchronizer<SimulationPolicy> simulation_sync;
+
+	//message_filters::Subscriber<sensor_msgs::Image> img_sub; // for color
+
 
 public:
 	PointCloudNode();
 	~PointCloudNode(){};
 
-	void pcl_callback(const sensor_msgs::PointCloud2ConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
-	void sim_pcl_callback(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
+	// real world call back, no color PoseStampedConstPtr
+	void pioneer_callback(const kinect_slam::Pose2DMsgConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
+	// real world, with color
+	// void pioneer_callback
 
-	void state_callback(const geometry_msgs::Pose2D&);
-	void sim_state_callback(const nav_msgs::Odometry::ConstPtr&);
+
+	// simulation callback, color
+	//void simulation_callback(const nav_msgs::Odometry::ConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
+	// simulation callback, no color
+	void simulation_callback(const nav_msgs::Odometry::ConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
 
 	void cloud_append(PointCloudPtr);
-	void print_cloud(PointCloudPtr);
-	void visualize_cloud(PointCloudPtr);
+	void build_octomap();
+
+	// transformation helpers
+	PointCloudPtr transform_cloud(PointCloudPtr, float, float, float, float, const std::string);
+	PointCloudPtr to_global(PointCloudPtr);
+
+	// filtering
+	PointCloudPtr pt_filter(PointCloudPtr, const std::string, const float, const float);
+	PointCloudPtr remove_floor(PointCloudPtr);
+	void voxel_filter(float);
 
 	// simulate data for testing methods
 	PointCloudPtr simulate_circle(int, float);
 	PointCloudPtr simulate_square(int, float);
 
-	// filtering
-	PointCloudPtr pt_filter(PointCloudPtr, const std::string, const float, const float);
-	void voxel_filter(PointCloudPtr, float);
-
-	// transformation
-	PointCloudPtr transform_cloud(PointCloudPtr, float, float, float, float, const std::string);
-	PointCloudPtr to_global(PointCloudPtr);
-
-	// octomap builder
-	void build_octomap();
+	// methods to validate intermediate results
+	void print_cloud(PointCloudPtr);
+	void visualize_cloud(PointCloudPtr);
 };

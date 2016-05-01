@@ -13,7 +13,7 @@ EKF_SLAM::EKF_SLAM()
 	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
-	 robot_state_pub = nh.advertise<geometry_msgs::Pose2D>("pose", 50);
+	 robot_state_pub = nh.advertise<kinect_slam::Pose2DMsg>("pose", 50);
 
 }
 
@@ -29,14 +29,14 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
-	robot_state_pub = nh.advertise<geometry_msgs::Pose2D>("pose", 50);
+	robot_state_pub = nh.advertise<kinect_slam::Pose2DMsg>("pose", 50);
 
 }
 
 //TODO
 void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 {
-	// std::cout<<"Prediction: Vel: "<<linear_vel<<" Rot: "<<angular_vel<<std::endl; 
+	// std::cout<<"Prediction: Vel: "<<linear_vel<<" Rot: "<<angular_vel<<std::endl;
 	// std::cout<<"Before: "<<std::endl<<state_mean.block<3,1>(0,0)<<std::endl;
 	double delta_x;
 	double delta_y;
@@ -44,7 +44,7 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	Eigen::Vector3d delta_state;
 	Eigen::Matrix3d G;
 	Eigen::MatrixXd V(3,2);
-	
+
     //Prediction based on linear velocity and angular velocity
 	// if(angular_vel==0)
 	{
@@ -55,7 +55,7 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	    G<< 1, 0, (-linear_vel*delta_t*sin(state_mean(2))),
 	        0, 1, (linear_vel*delta_t*cos(state_mean(2))),
 	        0, 0, 1;
-		
+
 	    V<< -cos(state_mean(2))*delta_t, 0,
 	        -sin(state_mean(2))*delta_t, 0,
 	        0, -delta_t;
@@ -70,13 +70,13 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	 //    G<< 1, 0, -radius*cos(state_mean(2)) + radius*cos(state_mean(2)+angular_vel*delta_t),
 	 //        0, 1, -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t),
 	 //        0, 0, 1;
-		
+
 	 //    V<< (-sin(state_mean(2))+sin(state_mean(2)+angular_vel*delta_t))/angular_vel, radius/angular_vel*sin(state_mean(2))-radius/angular_vel*sin(state_mean(2)+angular_vel*delta_t)+radius*cos(state_mean(2)+angular_vel*delta_t)*delta_t,
 	 //        (cos(state_mean(2))-cos(state_mean(2)+angular_vel*delta_t))/angular_vel, -radius/angular_vel*cos(state_mean(2))+radius/angular_vel*cos(state_mean(2)+angular_vel*delta_t)+radius*sin(state_mean(2)+angular_vel*delta_t)*delta_t,
 	 //        0, delta_t;
   //   }
 
-	delta_state << delta_x, 
+	delta_state << delta_x,
 				   delta_y,
 				   delta_theta;
 	state_mean.block<3,1>(0,0) += delta_state;
@@ -85,12 +85,12 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 		state_mean(2)=state_mean(2)-2*PI;
 	}
     double sigma_l =  MOTION_FACTOR*linear_vel;
-    double sigma_r = TURN_FACTOR*angular_vel; 
-	
+    double sigma_r = TURN_FACTOR*angular_vel;
+
 	Eigen::Matrix2d cov_control;
 	cov_control << sigma_l*sigma_l, 0,
 				   0, sigma_r*sigma_r;
-    
+
 	state_cov.block<3,3>(0,0) = G * state_cov.block<3,3>(0,0) * G.transpose() + V * cov_control * V.transpose();
 	state_cov.block<3,3>(0,0) = (state_cov.block<3,3>(0,0) + state_cov.block<3,3>(0,0).transpose()) / 2;
 	G_accu = G * G_accu;
@@ -98,7 +98,7 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	// std::cout<<"After: "<<std::endl<<state_mean.block<3,1>(0,0)<<std::endl;
 
 	//test_prediction
-	geometry_msgs::Pose2D test_pose;
+	kinect_slam::Pose2DMsg test_pose;
 	test_pose.x = state_mean(0);
 	test_pose.y = state_mean(1);
 	test_pose.theta = state_mean(2);
@@ -118,15 +118,15 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 	Eigen::MatrixXd H_Li, H_R;
 	H_R = Eigen::MatrixXd::Zero(3,3);
 	H_Li = Eigen::MatrixXd::Zero(3,3);
-	H_R(0,0) = -cos(state_mean(2)); 
-	H_R(0,1) = -sin(state_mean(2)); 
-	H_R(1,0) =  sin(state_mean(2)); 
-	H_R(1,1) = -cos(state_mean(2)); 
-	H_R(0,2) =  y; 
-	H_R(1,2) = -x; 
-	H_Li(0,0) =  cos(state_mean(2)); 
-	H_Li(0,1) =  sin(state_mean(2)); 
-	H_Li(1,0) = -sin(state_mean(2)); 
+	H_R(0,0) = -cos(state_mean(2));
+	H_R(0,1) = -sin(state_mean(2));
+	H_R(1,0) =  sin(state_mean(2));
+	H_R(1,1) = -cos(state_mean(2));
+	H_R(0,2) =  y;
+	H_R(1,2) = -x;
+	H_Li(0,0) =  cos(state_mean(2));
+	H_Li(0,1) =  sin(state_mean(2));
+	H_Li(1,0) = -sin(state_mean(2));
 	H_Li(1,1) =  cos(state_mean(2));
 	H_Li(2,2) = 1;
 	Eigen::MatrixXd _HHP = -H_Li.transpose()*H_R*state_cov.block(0,0,3,former_length);
@@ -161,13 +161,13 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	Eigen::VectorXd _measurement(3*mm_count);
 	for(int mm_i=0; mm_i<mm_count; mm_i++)
 	{
-		int landmark_idx = measurements_idx(mm_i);	
+		int landmark_idx = measurements_idx(mm_i);
 		double q_x =  (state_mean(3+landmark_idx*3) - state_mean(0))*cos(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*sin(state_mean(2)) - KINECT_DISP;
 		double q_y = -(state_mean(3+landmark_idx*3) - state_mean(0))*sin(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*cos(state_mean(2));
 		_measurement(3*mm_i)=q_x;
 		_measurement(3*mm_i+1)=q_y;
 		_measurement(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
-						
+
 
 		Eigen::MatrixXd F;
 		F = Eigen::MatrixXd::Zero(6, state_mean.rows());
@@ -180,15 +180,15 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 
 		Eigen::MatrixXd H_reduced, HRHi;
 		H_reduced = Eigen::MatrixXd::Zero(3,6);
-		H_reduced(0,0) = -cos(state_mean(2)); 
-		H_reduced(0,1) = -sin(state_mean(2)); 
-		H_reduced(1,0) =  sin(state_mean(2)); 
-		H_reduced(1,1) = -cos(state_mean(2)); 
-		H_reduced(0,2) =  q_y; 
-		H_reduced(1,2) = -q_x; 
-		H_reduced(0,3) =  cos(state_mean(2)); 
-		H_reduced(0,4) =  sin(state_mean(2)); 
-		H_reduced(1,3) = -sin(state_mean(2)); 
+		H_reduced(0,0) = -cos(state_mean(2));
+		H_reduced(0,1) = -sin(state_mean(2));
+		H_reduced(1,0) =  sin(state_mean(2));
+		H_reduced(1,1) = -cos(state_mean(2));
+		H_reduced(0,2) =  q_y;
+		H_reduced(1,2) = -q_x;
+		H_reduced(0,3) =  cos(state_mean(2));
+		H_reduced(0,4) =  sin(state_mean(2));
+		H_reduced(1,3) = -sin(state_mean(2));
 		H_reduced(1,4) =  cos(state_mean(2));
 		H_reduced(2,5) = 1;
 
@@ -210,7 +210,7 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	state_cov = (state_cov + state_cov.transpose()) / 2;
 	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
 	//std::cout<<"end"<<std::endl;
-	geometry_msgs::Pose2D cur_state;
+	kinect_slam::Pose2DMsg cur_state;
 
 	cur_state.x = state_mean(0);
 	cur_state.y = state_mean(1);

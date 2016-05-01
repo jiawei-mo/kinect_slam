@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   LandmarkMsg.msg
+  Pose2DMsg.msg
 )
 
 generate_dynamic_reconfigure_options(
