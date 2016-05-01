@@ -90,6 +90,7 @@ void PointCloudNode::pioneer_callback(const kinect_slam::Pose2DMsgConstPtr& stat
 	float x = state_msg->x;
 	float y = state_msg->y;
 	float th = state_msg->theta;
+	std::cout << "Raw state. " << ". X: " << x << ", Y: " << y << " Th: " << th << std::endl;
 
 	state_mean << x,
 				  y,

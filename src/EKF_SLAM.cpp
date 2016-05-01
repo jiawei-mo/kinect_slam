@@ -99,6 +99,8 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 
 	//test_prediction
 	kinect_slam::Pose2DMsg test_pose;
+	test_pose.header.stamp = ros::Time::now();
+	test_pose.header.frame_id = "pose";
 	test_pose.x = state_mean(0);
 	test_pose.y = state_mean(1);
 	test_pose.theta = state_mean(2);
@@ -211,7 +213,8 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
 	//std::cout<<"end"<<std::endl;
 	kinect_slam::Pose2DMsg cur_state;
-
+	cur_state.header.stamp = ros::Time::now();
+	cur_state.header.frame_id = "pose";
 	cur_state.x = state_mean(0);
 	cur_state.y = state_mean(1);
 	cur_state.theta = state_mean(2);
