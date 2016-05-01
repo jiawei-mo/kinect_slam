@@ -10,8 +10,9 @@
 #include "Control.hpp"
 #define OBSTACLE_FRONT 0.1 //2
 #define OBSTACLE_SIDES 3
-#define LEFT_AVAILABLE 1.5 //3
+#define LEFT_AVAILABLE 5 //3
 #define LEFT_AVAILABLE_SIDES 3
+#define ALERT_DISTANCE 0.25
 
 class Control_Node
 {
@@ -21,8 +22,10 @@ private:
 	Control myCtrl;
 	int turn_count;
 	int correct_count;
-	int correction_threshold;
-
+	double distance_maintain;
+    double correction_threshold;
+    double turn_time;
+   // double pre_sonar;
 public:
 	Control_Node();
 	~Control_Node(){};

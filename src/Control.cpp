@@ -43,6 +43,7 @@ void Control::poseMeassageReceived(const geometry_msgs::Pose2D &msg)
      {
       correct.linear.x = BASE_SPEED; //publish the new velocity to rosaria
       pub.publish(correct);
+      correct_pub.twist.angular.z=correct_pub.twist.angular.z/3;
       correct_pub.twist=correct;
      }
       count++;

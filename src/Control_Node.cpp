@@ -5,7 +5,8 @@ Control_Node::Control_Node()
   double ini_CLOCK_SPEED=1;
   double Initialization_time=6;
   double ini_count=0;
-  ros::Rate ini_rate(ini_CLOCK_SPEED);
+  // ros::Rate ini_rate(ini_CLOCK_SPEED);
+  turn_time=ros::Time::now().toSec();
   /*while (ros::ok() && ini_count<Initialization_time)
   {
     ini_count++;
@@ -14,16 +15,16 @@ Control_Node::Control_Node()
   */
   turn_count = 0;
   correct_count=0;
-  correction_threshold=1;
+  distance_maintain=0.8;
+  correction_threshold=0.1;
   sonar = nh.subscribe("RosAria/sonar",1, &Control_Node::sonarMeassageReceived,this);
 }
 
 void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
 {
-  double CLOCK_SPEED=1;
-  ros::Rate rate(CLOCK_SPEED);
   char action;
-  if(msg.points[0].y>=LEFT_AVAILABLE) 
+  double current_time=ros::Time::now().toSec();
+  if(msg.points[0].y>=LEFT_AVAILABLE && current_time-turn_time>30) 
   { 
     //myCtrl.turn_left();
     action=system("rosrun kinect_slam turn_left");
@@ -31,6 +32,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    //myCtrl.go_straight();  
    turn_count++;
    correct_count++;
+   turn_time=current_time;
   }
   if(msg.points[3].x<OBSTACLE_FRONT && msg.points[2].x>OBSTACLE_SIDES &&msg.points[1].x>OBSTACLE_SIDES) //avoid obstacle left
   {
@@ -50,11 +52,45 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   }
    //if none of the situations above is satisfied, robot keep going straight and run pose correction
    //myCtrl.go_straight();
-   action = system("rosrun kinect_slam go_straight");
-   if(correct_count>=correction_threshold)
+   if(msg.points[0].y>(distance_maintain+correction_threshold)) //right drift
    {
-       myCtrl.pose_correction();
-       correct_count=0;
+       if (msg.points[0].y<=ALERT_DISTANCE)
+       {
+        action=system("rosrun kinect_slam pose_correction_left");
+        action=system("rosrun kinect_slam pose_correction_left");
+        action=system("rosrun kinect_slam pose_correction_left");
+        action=system("rosrun kinect_slam pose_correction_right");
+        action=system("rosrun kinect_slam pose_correction_right");
+        action=system("rosrun kinect_slam pose_correction_right");
+       }
+       else
+       {
+        action=system("rosrun kinect_slam pose_correction_left");
+        action=system("rosrun kinect_slam pose_correction_right");
+       }
+       //action = system("rosrun kinect_slam go_straight");
    }
-   rate.sleep();
+   else if(msg.points[0].y<(distance_maintain-correction_threshold)) //left drift
+   {
+       if(abs(msg.points[6].y)<ALERT_DISTANCE)
+       {
+         action=system("rosrun kinect_slam pose_correction_right");
+         action=system("rosrun kinect_slam pose_correction_right");
+         action=system("rosrun kinect_slam pose_correction_right");
+         action=system("rosrun kinect_slam pose_correction_left");
+         action=system("rosrun kinect_slam pose_correction_left");
+         action=system("rosrun kinect_slam pose_correction_left");
+       }
+       else
+       {
+        action=system("rosrun kinect_slam pose_correction_right");
+        action=system("rosrun kinect_slam pose_correction_left");
+       }      
+       // action = system("rosrun kinect_slam go_straight");
+      // action=system("rosrun kinect_slam spose_correction_left");
+   }
+   else
+   {
+        action = system("rosrun kinect_slam go_straight");
+   }
 }
