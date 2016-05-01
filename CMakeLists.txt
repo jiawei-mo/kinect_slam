@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   tf2_ros
   pcl_ros
-  pcl_conversions
   cv_bridge
   dynamic_reconfigure
   image_transport
@@ -20,7 +19,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   LandmarkMsg.msg
-  Pose2DMsg.msg
 )
 
 generate_dynamic_reconfigure_options(
@@ -38,7 +36,9 @@ add_executable(landmark_node src/LandmarkExtractorNode_main.cpp src/LandmarkExtr
 add_executable(control_node src/control_main.cpp src/Control_Node.cpp src/Control.cpp)
 add_executable(turn_left src/turn_left.cpp)
 add_executable(turn_right src/turn_right.cpp)
-add_executable(pc_node src/PointCloudeNode_main.cpp src/PointCloudNode.cpp)
+add_executable(go_straight src/go_straight.cpp)
+add_executable(pose_correction_left src/pose_correction_left.cpp)
+add_executable(pose_correction_right src/pose_correction_right.cpp)
 
 add_dependencies(slam_node ${PROJECT_NAME}_gencfg)
 add_dependencies(landmark_node ${PROJECT_NAME}_gencfg)
@@ -46,27 +46,14 @@ add_dependencies(landmark_node ${PROJECT_NAME}_gencfg)
 find_package(OpenCV REQUIRED)
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
-find_package(PCL REQUIRED)
-include_directories(  ${catkin_INCLUDE_DIRS}  ${PCL_INCLUDE_DIRS} )
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-
-find_package(octomap REQUIRED)
-include_directories(${OCTOMAP_INCLUDE_DIRS})
-link_directories(${OCTOMAP_LIBRARY_DIRS})
-link_libraries(${OCTOMAP_LIBRARIES})
-
 target_link_libraries(slam_node ${catkin_LIBRARIES})
 target_link_libraries(landmark_node ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 target_link_libraries(control_node ${catkin_LIBRARIES})
 target_link_libraries(turn_left ${catkin_LIBRARIES})
 target_link_libraries(turn_right ${catkin_LIBRARIES})
-target_link_libraries(pc_node ${OpenCV_LIBRARIES} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
-
-
-add_dependencies(pc_node kinect_slam_generate_messages_cpp)
-add_dependencies(slam_node kinect_slam_generate_messages_cpp)
-
+target_link_libraries(go_straight ${catkin_LIBRARIES})
+target_link_libraries(pose_correction_left ${catkin_LIBRARIES})
+target_link_libraries(pose_correction_right ${catkin_LIBRARIES})
 
 generate_messages(
   DEPENDENCIES geometry_msgs std_msgs
