@@ -8,7 +8,6 @@ Control_Node::Control_Node()
   double distance_maintain =0.8;
   // ros::Rate ini_rate(ini_CLOCK_SPEED);
   turn_time=ros::Time::now().toSec();
-  correct_time=ros::Time::now().toSec();
   /*while (ros::ok() && ini_count<Initialization_time)
   {
     ini_count++;
@@ -16,10 +15,8 @@ Control_Node::Control_Node()
   }
   */
   turn_count = 0;
-  correct_count=0;
   distance_maintain=0.8;
   correction_threshold=0.1;
-  follow_wall_count=0;
   sonar = nh.subscribe("RosAria/sonar",1, &Control_Node::sonarMeassageReceived,this);
   pose_correct=nh.subscribe("/pose",1, &Control_Node::poseMeassageReceived,this);
 }
@@ -50,11 +47,8 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     // }
     action=system("rosrun kinect_slam turn_left");
     action = system("rosrun kinect_slam go_straight");
-    pre_follow_wall_time = ros::Time::now().toSec();
    //myCtrl.go_straight();  
    turn_count++;
-   correct_count++;
-   follow_wall_count++;
    turn_time=current_time;
   }
   if(msg.points[3].x<OBSTACLE_FRONT && msg.points[2].x>OBSTACLE_SIDES &&msg.points[1].x>OBSTACLE_SIDES) //avoid obstacle left
@@ -63,7 +57,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    //myCtrl.turn_right(); 
    action=system("rosrun kinect_slam turn_left");
    action=system("rosrun kinect_slam turn_right");
-   correct_count++; 
+   turn_count++; 
   } 
   if(msg.points[3].x<OBSTACLE_FRONT && msg.points[4].x>OBSTACLE_SIDES &&msg.points[5].x>OBSTACLE_SIDES) //avoid obstacle left
   {
@@ -71,20 +65,21 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    //myCtrl.turn_left();  
     action=system("rosrun kinect_slam turn_right");
     action=system("rosrun kinect_slam turn_left");
-    correct_count++;
+    turn_count++;
   }
   //follow wall
   current_time = ros::Time::now().toSec();
- if ((msg.points[0].y-distance_maintain)>0.4 && turn_count>0 && follow_wall_count==0)
+ if (((msg.points[0].y-distance_maintain)<0.3 || (msg.points[6].y+distance_maintain)>0.3) && turn_count>0 && current_time-turn_time>30)
  {
-   action=system("rosrun kinect_slam pose_correction_left");
-   action=system("rosrun kinect_slam pose_correction_right");
+   if ((msg.points[0].y-distance_maintain)<0.3)
+    myCtrl.follow_wall(1); //slightly turn right
+   else
+    myCtrl.follow_wall(0); //slightly turn left
    turn_count=0;
-   follow_wall_count=0;
  }
  //pose correction using EKF estimation
-  current_time=ros::Time::now().toSec();
-  double cheat_time = current_time - turn_time;
+   current_time=ros::Time::now().toSec();
+   double cheat_time = current_time - turn_time;
     // if (correct_count>0 || correct_time-correct_current_time>15)
     // {
    myCtrl.pose_correction(current_theta,cheat_time);

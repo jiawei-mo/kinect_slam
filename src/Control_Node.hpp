@@ -21,14 +21,10 @@ private:
 	ros::Subscriber pose_correct;
 	Control myCtrl;
 	int turn_count;
-	int correct_count;
 	double distance_maintain;
     double correction_threshold;
     double turn_time;
-    double correct_time;
     double current_theta;
-    double pre_follow_wall_time;
-    double follow_wall_count;
 
    // double pre_sonar;
 public:
