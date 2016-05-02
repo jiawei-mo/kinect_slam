@@ -27,6 +27,11 @@ private:
     double turn_time;
     double correct_time;
     double current_theta;
+<<<<<<< HEAD
+    double pre_follow_wall_time;
+    double follow_wall_count;
+=======
+>>>>>>> 7848c2a4f7a859934ccc927b2a578e8138c89a7b
    // double pre_sonar;
 public:
 	Control_Node();
