@@ -31,7 +31,7 @@ int main(int argc, char **argv)
       if (count == 0 || count == 1)
 	    {
          msg.linear.x = BASE_SPEED;
-	       msg.angular.z = -1 * PI/ 30;
+	       msg.angular.z = -1 * PI/ 10;
          msg_pub.twist=msg;
          msg_pub.twist.angular.z= msg_pub.twist.angular.z/3;
          //current.sec = ros::Time::now().toSec();

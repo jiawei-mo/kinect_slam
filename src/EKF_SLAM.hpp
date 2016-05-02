@@ -3,7 +3,7 @@
 #include <Eigen/Core>
 #include <math.h>
 #include <boost/dynamic_bitset.hpp>
-//#include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/Pose2D.h>
 #include "kinect_slam/Pose2DMsg.h"
 #define KINECT_DISP 0.07	//measured
 #define KINECT_X_VAR 0.7

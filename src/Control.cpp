@@ -3,11 +3,7 @@
 
 void Control::pose_correction(double theta)
 {
-<<<<<<< HEAD
   double BASE_SPEED = 0.2, MOVE_TIME = 2, CLOCK_SPEED = 1;
-=======
-  double BASE_SPEED = 0.1, MOVE_TIME = 4, CLOCK_SPEED = 1;
->>>>>>> 7848c2a4f7a859934ccc927b2a578e8138c89a7b
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   rate.reset();

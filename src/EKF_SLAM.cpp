@@ -13,11 +13,8 @@ EKF_SLAM::EKF_SLAM()
 	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
-<<<<<<< HEAD
-	 robot_state_pub = nh.advertise<geometry_msgs::Pose2D>("pose", 50);
-=======
+
 	 robot_state_pub = nh.advertise<kinect_slam::Pose2DMsg>("pose", 50);
->>>>>>> 7848c2a4f7a859934ccc927b2a578e8138c89a7b
 
 }
 
@@ -109,13 +106,9 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	// std::cout<<"After: "<<std::endl<<state_mean.block<3,1>(0,0)<<std::endl;
 
 	//test_prediction
-<<<<<<< HEAD
-	geometry_msgs::Pose2D test_pose;
-=======
 	kinect_slam::Pose2DMsg test_pose;
 	test_pose.header.stamp = ros::Time::now();
 	test_pose.header.frame_id = "pose";
->>>>>>> 7848c2a4f7a859934ccc927b2a578e8138c89a7b
 	test_pose.x = state_mean(0);
 	test_pose.y = state_mean(1);
 	test_pose.theta = state_mean(2);
@@ -218,7 +211,6 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
 	//std::cout<<"after inverse"<<std::endl;
 	state_mean += K*(measurements - _measurement);
-<<<<<<< HEAD
     //normalize the orientation range
     if(state_mean(2)>=2*PI)
 	{
@@ -231,12 +223,6 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	else
 	{
     }
-=======
-	if(state_mean(2)>=2*PI)
-	{
-		state_mean(2)=state_mean(2)-2*PI;
-	}
->>>>>>> 7848c2a4f7a859934ccc927b2a578e8138c89a7b
 	//std::cout<<"mean update"<<std::endl;
 	state_cov = state_cov - K*S*K.transpose();
 	state_cov = (state_cov + state_cov.transpose()) / 2;

@@ -17,22 +17,13 @@ int main(int argc, char **argv)
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
 
-  // Make the robot stop (robot perhaps has a speed already) 
-  /*msg.linear.x = 0;
-  msg.linear.y = 0;
-  msg.linear.z = 0;
-  msg.angular.x = 0;
-  msg.angular.y = 0;
-  msg.angular.z = 0;
-  pub.publish(msg);*/
-
   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED) //2
   {
       // Spin PI/2
       if (count == 0 || count == 1)
 	    {
          msg.linear.x=BASE_SPEED;  
-	       msg.angular.z = PI/20;//2
+	       msg.angular.z = PI/10;//2
          msg_pub.twist = msg;
          msg_pub.twist.angular.z= msg_pub.twist.angular.z/3;
          //current.sec = ros::Time::now().toSec();
@@ -47,17 +38,4 @@ int main(int argc, char **argv)
       rate.sleep();
   }    
 
-    // Stop the spin
- /* for(int i = 0; i < 2; i++)
-  {
-      msg.angular.x = 0;
-      msg.angular.y = 0;
-      msg.angular.z = 0;
-      msg_pub.twist=msg;
-      msg_pub.header.stamp.sec=ros::Time::now().toSec();
-      pub.publish(msg);
-      control.publish(msg_pub);
-  }*/
-    
-  //Guard, make sure the robot stops
 }
