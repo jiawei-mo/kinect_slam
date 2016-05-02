@@ -1,12 +1,16 @@
-#include<ros/ros.h>
-#include<geometry_msgs/TwistStamped.h>
-#include<geometry_msgs/Twist.h>
-#include<std_msgs/Time.h>
+#include <ros/ros.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Time.h>
+//#include "ArTimeToROSTime.h"
+#include <stdio.h>
+#include <cmath>
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "go_straight");
   ros::NodeHandle nh;
-  
+  // ArRobot *robot;
+  // robot = new ArRobot();
   ros::Publisher control=nh.advertise<geometry_msgs::TwistStamped>("/control",1);
   ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("RosAria/cmd_vel", 1);
  // ros::Publisher _time = nh.advertise<std_msgs::Time>("/current_time",1);
@@ -34,7 +38,10 @@ int main(int argc, char **argv)
 	    msg.linear.x = BASE_SPEED; //publish the new velocity to rosaria
       msg_pub.twist=msg;
       //current.sec=ros::Time::now().toSec();
-	    pub.publish(msg);
+	     // robot->lock();
+      //  robot->setVel(msg.linear.x*1000);
+      //  robot->unlock();
+       pub.publish(msg);
      // _time.publish(current);
 
 	  }

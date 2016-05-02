@@ -1,9 +1,16 @@
 #include "Control.hpp"
 #include <cmath>
 
-void Control::pose_correction(double theta)
+void Control::pose_correction(double theta,double cheat_time)
 {
-  double BASE_SPEED = 0.2, MOVE_TIME = 2, CLOCK_SPEED = 1;
+  // ArRobot *robot;
+  // robot = new ArRobot();
+  double time_threshold = 80;
+  double BASE_SPEED = 0.1, MOVE_TIME = 2, CLOCK_SPEED = 1;
+  if (cheat_time>time_threshold)
+  {
+    BASE_SPEED = 0.1;
+  }
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   rate.reset();
@@ -38,6 +45,10 @@ void Control::pose_correction(double theta)
     if (count == 0 || count == 1)
      {
       correct.linear.x = BASE_SPEED; //publish the new velocity to rosaria
+      // robot->lock();
+      // robot->setVel(correct.linear.x*1000);
+      // robot->setRotVel(correct.angular.z*180/M_PI);
+      // robot->unlock();
       pub.publish(correct);
       correct_pub.twist=correct;
       correct_pub.twist.angular.z=correct_pub.twist.angular.z/3;

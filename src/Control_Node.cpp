@@ -28,7 +28,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
 {
   char action;
   double current_time=ros::Time::now().toSec();
-  if(msg.points[0].y>=LEFT_AVAILABLE && current_time-turn_time>20) 
+  if(msg.points[0].y>=LEFT_AVAILABLE && current_time-turn_time>30) 
   { 
     //myCtrl.turn_left();
     // double stop_time=2;
@@ -83,20 +83,21 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    follow_wall_count=0;
  }
  //pose correction using EKF estimation
-  double correct_current_time=ros::Time::now().toSec();
+  current_time=ros::Time::now().toSec();
+  double cheat_time = current_time - turn_time;
     // if (correct_count>0 || correct_time-correct_current_time>15)
     // {
-  myCtrl.pose_correction(current_theta);
+   myCtrl.pose_correction(current_theta,cheat_time);
      //correct_count=0;
     //correct_time=correct_current_time;
     // }
     ///////////////////////////////////////////////////
     //action = system("rosrun kinect_slam go_straight");
     ///////////////////////////////////////////////////
-    action = system("rosrun kinect_slam go_straight");
+    //action = system("rosrun kinect_slam go_straight");
 }
 
-void Control_Node::poseMeassageReceived(const geometry_msgs::Pose2D &msg)
+void Control_Node::poseMeassageReceived(const kinect_slam::Pose2DMsg &msg)
 {
   current_theta=msg.theta;
 }

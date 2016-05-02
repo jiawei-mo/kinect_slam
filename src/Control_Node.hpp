@@ -35,5 +35,5 @@ public:
 	Control_Node();
 	~Control_Node(){};
 	void sonarMeassageReceived(const sensor_msgs::PointCloud &msg);
-	void poseMeassageReceived(const geometry_msgs::Pose2D &msg);
+	void poseMeassageReceived(const kinect_slam::Pose2DMsg &msg);
 };
