@@ -63,7 +63,7 @@ void Control::pose_correction(double theta,double cheat_time)
 
 void Control::follow_wall(int flag)
 {
-  double BASE_SPEED = 0.1, MOVE_TIME = 3, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.05, MOVE_TIME = 3, CLOCK_SPEED = 1;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   geometry_msgs::Twist follow_wall_first;

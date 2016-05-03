@@ -20,14 +20,17 @@ int main(int argc, char **argv)
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
 
-  // Make the robot stop (robot perhaps has a speed already) 
-  /*msg.linear.x = 0;
+  // stop before turning
+  msg.linear.x = 0;
   msg.linear.y = 0;
   msg.linear.z = 0;
   msg.angular.x = 0;
   msg.angular.y = 0;
   msg.angular.z = 0;
-  pub.publish(msg);*/
+  msg_pub.twist=msg;
+  pub.publish(msg);
+  msg_pub.header.stamp.sec = ros::Time::now().toSec();
+  control.publish(msg_pub);
 
   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED) //2
   {
