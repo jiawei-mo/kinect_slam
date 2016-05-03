@@ -8,7 +8,7 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/TwistStamped.h>
 #include "Control.hpp"
-#define OBSTACLE_FRONT 0.1 //2
+#define OBSTACLE_FRONT 2.5 //2
 #define OBSTACLE_SIDES 3
 #define LEFT_AVAILABLE 5 //3
 #define LEFT_AVAILABLE_SIDES 3
