@@ -25,7 +25,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
 {
   char action;
   double current_time=ros::Time::now().toSec();
-  if(msg.points[0].y>=LEFT_AVAILABLE && current_time-turn_time>30) 
+  if(msg.points[0].y>=LEFT_AVAILABLE && current_time-turn_time>20) 
   { 
     //myCtrl.turn_left();
     // double stop_time=2;
@@ -69,9 +69,9 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   }
   //follow wall
   current_time = ros::Time::now().toSec();
- if ((msg.points[0].y<0.5 || msg.points[6].y>-0.5))//&& turn_count>0 && current_time-turn_time>30)
+ if ((msg.points[0].y<1 || msg.points[6].y>-1))//&& turn_count>0 && current_time-turn_time>30)
  {
-   if ((msg.points[0].y-distance_maintain)<0.5)
+   if ((msg.points[0].y-distance_maintain)<1)
     myCtrl.follow_wall(1); //slightly turn right
    else
     myCtrl.follow_wall(0); //slightly turn left

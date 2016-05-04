@@ -14,4 +14,5 @@ public:
 	void follow_wall(int flag);
 private:
 	ros::NodeHandle n;
+	bool lock;
 };

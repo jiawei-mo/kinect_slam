@@ -5,6 +5,7 @@ void Control::pose_correction(double theta,double cheat_time)
 {
   // ArRobot *robot;
   // robot = new ArRobot();
+  lock=0;
   double time_threshold = 80;
   double BASE_SPEED = 0.2, MOVE_TIME = 2, CLOCK_SPEED = 1;
   if (cheat_time>time_threshold)
@@ -19,25 +20,30 @@ void Control::pose_correction(double theta,double cheat_time)
   geometry_msgs::TwistStamped correct_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
   ros::Publisher velocity =n.advertise<geometry_msgs::TwistStamped>("/control",1);
-  if (abs(0-theta)<threshold)
+  if (abs(0-theta)<threshold && !lock)
   {
       correct.angular.z=(0-theta);///int(MOVE_TIME/CLOCK_SPEED);
+      lock=1;
   }
-  if (abs(2*PI-theta)<threshold)
+  if (abs(2*PI-theta)<threshold && !lock)
   {
       correct.angular.z=(2*PI-theta);///int(MOVE_TIME/CLOCK_SPEED);
+      lock=1;
   }
-  if (abs(PI/2-theta)<threshold)
+  if (abs(PI/2-theta)<threshold && !lock)
   {
       correct.angular.z=(PI/2-theta);///int(MOVE_TIME/CLOCK_SPEED);
+      lock=1;
   }
-  if (abs(PI-theta)<threshold)
+  if (abs(PI-theta)<threshold && !lock)
   {
       correct.angular.z=(PI-theta);///int(MOVE_TIME/CLOCK_SPEED);
+      lock=1;
   }
-  if (abs((3*PI/2-theta)<threshold))
+  if (abs((3*PI/2-theta)<threshold) && !lock)
   {
        correct.angular.z=(3*PI/2-theta);///int(MOVE_TIME/CLOCK_SPEED);
+       lock=1;
   }
   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
    {
@@ -73,13 +79,13 @@ void Control::follow_wall(int flag)
   ros::Publisher velocity =n.advertise<geometry_msgs::TwistStamped>("/control",1);
   if (flag==0)
   {
-    follow_wall_first.angular.z = PI/8;
-    follow_wall_second.angular.z = -PI/8;
+    follow_wall_first.angular.z = PI/20;
+    follow_wall_second.angular.z = -PI/20;
   }
   else
   {
-    follow_wall_first.angular.z = -PI/8;
-    follow_wall_second.angular.z = PI/8;
+    follow_wall_first.angular.z = -PI/20;
+    follow_wall_second.angular.z = PI/20;
   }
    while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
    {
