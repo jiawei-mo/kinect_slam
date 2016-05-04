@@ -11,7 +11,7 @@ class Control
 {
 public:
 	void pose_correction(double theta,double cheat_time);
-	void follow_wall(int flag);
+	bool follow_wall(int flag);
 	bool turn_left();
 	bool turn_right();
 	bool go_straight();
