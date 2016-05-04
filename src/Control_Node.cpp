@@ -45,7 +45,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     action_lock = myCtrl.turn_right(); 
    // action=system("rosrun kinect_slam turn_left");
    // action=system("rosrun kinect_slam turn_right");
-   turn_count++; 
+    turn_count++; 
   } 
   if(msg.points[3].x<OBSTACLE_FRONT && msg.points[4].x>OBSTACLE_SIDES &&msg.points[5].x>OBSTACLE_SIDES && !action_lock) //avoid obstacle left
   {
@@ -65,7 +65,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     myCtrl.follow_wall(1); //slightly turn right
    else
     myCtrl.follow_wall(0); //slightly turn left
-   turn_count=0;
+    turn_count=0;
  }
  //pose correction using EKF estimation
    current_time=ros::Time::now().toSec();

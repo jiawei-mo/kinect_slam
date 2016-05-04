@@ -103,7 +103,7 @@ void Control::follow_wall(int flag)
       ros::spinOnce();
       rate.sleep();
    }
-  count=0;
+   count=0;
    while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
    {
     if (count == 0 || count == 1)
@@ -164,6 +164,7 @@ bool Control::turn_left()
   }    
 
   ROS_INFO_STREAM("The robot finished turning left for 90 degree!");
+  
   return 0;
 }
 
@@ -187,7 +188,7 @@ bool Control::turn_right()
          msg.angular.z = -1 * PI/int(MOVE_TIME/CLOCK_SPEED) / 2;
          msg_pub.twist=msg;
          msg_pub.twist.angular.z= msg_pub.twist.angular.z/3;
-          pub.publish(msg);
+         pub.publish(msg);
       }
       ROS_INFO_STREAM("The robot is now turning right!");
       msg_pub.header.stamp.sec = ros::Time::now().toSec();
@@ -229,4 +230,6 @@ bool Control::go_straight()
       ros::spinOnce();
       rate.sleep();
    }
+
+   return 0;
 }
