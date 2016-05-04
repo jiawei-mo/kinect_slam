@@ -25,6 +25,7 @@ private:
     double correction_threshold;
     double turn_time;
     double current_theta;
+    bool action_lock;
 
    // double pre_sonar;
 public:
