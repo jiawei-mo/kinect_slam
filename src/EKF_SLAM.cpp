@@ -13,7 +13,7 @@ EKF_SLAM::EKF_SLAM()
 	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
-
+	 pcl_pub = nh.advertise<PointCloud> ("points2", 1);
 	 robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
 
 }
@@ -30,6 +30,7 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
+	pcl_pub = nh.advertise<PointCloud> ("points2", 1);
 	robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
 
 }
@@ -302,6 +303,24 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
   //       matches.push_back(l_matches[i]);
   //   }
   // }
+}
+
+void EKF_SLAM::landmark_pcl_pub()
+{
+	PointCloud::Ptr msg (new PointCloud);
+  	msg->header.frame_id = "/map";
+  	msg->height = 1;
+  	msg->width = num_landmarks;
+  	msg->points.resize(msg->height * msg->width);
+  	msg->is_dense = false;
+  	for(int i=0; i<num_landmarks; i++)
+  	{
+	    msg->points[i].x = state_mean(3+3*i);
+	    msg->points[i].y = state_mean(3+3*i+1);
+	    msg->points[i].z = state_mean(3+3*i+2);
+  	}
+	pcl_conversions::toPCL(ros::Time::now(), msg->header.stamp);
+	pcl_pub.publish(msg);
 }
 
 void EKF_SLAM::print_state()

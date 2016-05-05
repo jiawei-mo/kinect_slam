@@ -104,6 +104,7 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
   {
       slam_ptr->add_landmark(measurements(0,new_points[i][0]), measurements(1,new_points[i][0]), measurements(2,new_points[i][0]), descriptors[new_points[i][0]]);
   }
+  slam_ptr->landmark_pcl_pub();
   // slam_ptr->print_state();
 }
 

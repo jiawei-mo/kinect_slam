@@ -6,12 +6,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <math.h>
 #include <iostream>
-#include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h> 
 #define MIN_DEPTH_MM 10
-
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 LandmarkExtractorNode::LandmarkExtractorNode(): 
   img_sub(nh, "/camera/rgb/image_rect_color", 1),
@@ -25,7 +20,6 @@ LandmarkExtractorNode::LandmarkExtractorNode():
   f = boost::bind(&LandmarkExtractorNode::updateConfig, this, _1, _2);
   server.setCallback(f);
 
-  pcl_pub = nh.advertise<PointCloud> ("points2", 1);
   landmark_pub = nh.advertise<kinect_slam::LandmarkMsg>("landmarkWithDscrt", 50);
 }
 
@@ -80,12 +74,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   new_measurement_msg.landmark_count = 0;
   new_measurement_msg.descriptor_len = dscrt[0].size();
 
-  PointCloud::Ptr msg (new PointCloud);
-  msg->header.frame_id = "map";
-  msg->height = 1;
-  msg->width = kp.size();
-  msg->points.resize(msg->height * msg->width);
-  msg->is_dense = false;
+  
   for(int i=0; i<kp.size(); i++)
   {
   	unsigned short zt = depth.at<unsigned short>(kp[i].pt.y, kp[i].pt.x);
@@ -98,15 +87,9 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
     new_measurement_msg.position_signature.push_back(-y);
     for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
     new_measurement_msg.landmark_count++;
-
-    msg->points[i].x = x/1000.0;
-    msg->points[i].y = y/1000.0;
-    msg->points[i].z = z/1000.0;
   }
  	landmark_pub.publish(new_measurement_msg);
   // std::cout<<msg->points.size()<<std::endl;
-  pcl_conversions::toPCL(ros::Time::now(), msg->header.stamp);
-  pcl_pub.publish(msg);
   // std::cout<<new_measurement_msg.descriptor_mat.size()<<std::endl;
 }
 
