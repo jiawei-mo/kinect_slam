@@ -1,7 +1,7 @@
 #include "Control.hpp"
 #include <cmath>
 
-void Control::pose_correction(double theta,double cheat_time)
+bool Control::pose_correction(double theta,double cheat_time)
 {
   // ArRobot *robot;
   // robot = new ArRobot();
@@ -66,6 +66,8 @@ void Control::pose_correction(double theta,double cheat_time)
       rate.sleep();
    }
 
+   return 0;
+
 }
 
 bool Control::follow_wall(int flag)
@@ -75,19 +77,19 @@ bool Control::follow_wall(int flag)
   ros::Rate rate(CLOCK_SPEED);
   geometry_msgs::Twist follow_wall_first;
   // geometry_msgs::Twist follow_wall_second;
-  // geometry_msgs::Twist follow_wall_rect;
+  geometry_msgs::Twist follow_wall_rect;
   geometry_msgs::TwistStamped follow_wall_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
   ros::Publisher velocity =n.advertise<geometry_msgs::TwistStamped>("/control",1);
+  follow_wall_rect.angular.z = -PI/10;
   if (flag==0)
   {
-    follow_wall_first.angular.z = PI/15;
+    follow_wall_first.angular.z = PI/10;
     // follow_wall_second.angular.z = -PI/20;  //15
-    // follow_wall_rect.angular.z = PI/20;
   }
   else
   {
-    follow_wall_first.angular.z = -PI/15;
+    follow_wall_first.angular.z = -PI/10;
     // follow_wall_second.angular.z = PI/15;
     // follow_wall_rect.angular.z = PI/20;
   }
@@ -96,16 +98,16 @@ bool Control::follow_wall(int flag)
     if (count == 0 || count == 1)
      {
       follow_wall_first.linear.x = BASE_SPEED;
-      // follow_wall_rect.linear.z = BASE_SPEED; //publish the new velocity to rosaria
+      follow_wall_rect.linear.z = BASE_SPEED; //publish the new velocity to rosaria
       pub.publish(follow_wall_first);
-      // if (follow_wall_first.angular.z<0)
-      // {
+      if (follow_wall_first.angular.z>0)
+      {
        follow_wall_pub.twist=follow_wall_first;
-      // }
-      // else
-      // {
-      //  follow_wall_pub.twist=follow_wall_rect;
-      // }
+      }
+      else
+      {
+       follow_wall_pub.twist=follow_wall_rect;
+      }
       follow_wall_pub.twist.angular.z=follow_wall_pub.twist.angular.z/3;
      }
       count++;
@@ -140,7 +142,7 @@ bool Control::follow_wall(int flag)
    //    ros::spinOnce();
    //    rate.sleep();
    // }
-
+   ROS_INFO_STREAM("The robot finished avoiding wall!");
    return 0;
 }
 
