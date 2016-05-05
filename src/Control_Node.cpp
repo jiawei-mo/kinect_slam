@@ -94,5 +94,4 @@ void Control_Node::poseMeassageReceived(const geometry_msgs::PoseStamped &msg)
   double temp_theta_z = msg.pose.orientation.z;
   double temp_theta_w = msg.pose.orientation.w;
   current_theta=atan2(temp_theta_z,temp_theta_w)*2;
-  std::cout<<"current orientation is: "<<current_theta<<std::endl;
 }
