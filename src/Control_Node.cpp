@@ -18,6 +18,7 @@ Control_Node::Control_Node()
   turn_count = 0;
   distance_maintain=0.8;
   correction_threshold=0.1;
+  follow_wall_time = 0;
   action_lock=0;
   sonar = nh.subscribe("RosAria/sonar",1, &Control_Node::sonarMeassageReceived,this);
   pose_correct=nh.subscribe("/pose",1, &Control_Node::poseMeassageReceived,this);
@@ -61,8 +62,9 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   }
   //follow wall
   current_time = ros::Time::now().toSec();
- if ((msg.points[0].y<=1 || msg.points[6].y>-1) && !action_lock)//&& turn_count>0 && current_time-turn_time>30)
+ if ((msg.points[0].y<=1 || msg.points[6].y>-1) && !action_lock && current_time-follow_wall_time>30)//&& turn_count>0 && current_time-turn_time>30)
  {
+   follow_wall_time = ros::Time::now().toSec();
    action_lock = 1;
    if ((msg.points[0].y-distance_maintain)<=1)
    {
@@ -87,7 +89,9 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    }
 }
 
-void Control_Node::poseMeassageReceived(const kinect_slam::Pose2DMsg &msg)
+void Control_Node::poseMeassageReceived(const geometry_msgs::PoseStamped &msg)
 {
-  current_theta=msg.theta;
+  double temp_theta_z = msg.pose.orientation.z;
+  double temp_theta_w = msg.pose.orientation.w;
+  current_theta=atan2(temp_theta_z,temp_theta_w);
 }

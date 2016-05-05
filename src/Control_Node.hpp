@@ -25,6 +25,7 @@ private:
     double correction_threshold;
     double turn_time;
     double current_theta;
+    double follow_wall_time;
     bool action_lock;
     bool first_turn;
 
@@ -33,5 +34,5 @@ public:
 	Control_Node();
 	~Control_Node(){};
 	void sonarMeassageReceived(const sensor_msgs::PointCloud &msg);
-	void poseMeassageReceived(const kinect_slam::Pose2DMsg &msg);
+	void poseMeassageReceived(const geometry_msgs::PoseStamped &msg);
 };

@@ -1,11 +1,10 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/PoseStamped.h>
 //#include "ArTimeToROSTime.h"
 #include <stdio.h>
 #include <cmath>
-#include "kinect_slam/Pose2DMsg.h"
 #define PI 3.14159
 class Control
 {
