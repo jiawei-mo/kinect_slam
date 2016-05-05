@@ -27,7 +27,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
 {
   char action;
   double current_time=ros::Time::now().toSec();
-  if(msg.points[0].y>=LEFT_AVAILABLE && (current_time-turn_time>80 || first_turn)&& !action_lock && turn_count!=1)    //30s for turn_lock
+  if(msg.points[0].y>=LEFT_AVAILABLE && (current_time-turn_time>40)&& !action_lock && turn_count!=1)    //30s for turn_lock
   { 
     action_lock = 1; //locking the system to prevent operation conflict
     action_lock = myCtrl.turn_left();
@@ -65,9 +65,17 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
  {
    action_lock = 1;
    if ((msg.points[0].y-distance_maintain)<=1)
+   {
     action_lock = myCtrl.follow_wall(1); //slightly turn right
+    action_lock = 1;
+    action_lock = myCtrl.follow_wall(0);
+   }
    else
+   {
     action_lock = myCtrl.follow_wall(0); //slightly turn left
+    action_lock =1;
+    action_lock = myCtrl.follow_wall(1);
+   }
  }
  //pose correction using EKF estimation
    current_time=ros::Time::now().toSec();
