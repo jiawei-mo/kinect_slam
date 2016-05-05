@@ -28,7 +28,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
 {
   char action;
   double current_time=ros::Time::now().toSec();
-  if(msg.points[0].y>=LEFT_AVAILABLE && (current_time-turn_time>40)&& !action_lock && turn_count!=1)    //30s for turn_lock
+  if(msg.points[0].y>=LEFT_AVAILABLE && (current_time-turn_time>160|| first_turn)&& !action_lock)    //30s for turn_lock
   { 
     action_lock = 1; //locking the system to prevent operation conflict
     action_lock = myCtrl.turn_left();
@@ -62,7 +62,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   }
   //follow wall
   current_time = ros::Time::now().toSec();
- if ((msg.points[0].y<=1 || msg.points[6].y>-1) && !action_lock && current_time-follow_wall_time>30)//&& turn_count>0 && current_time-turn_time>30)
+ if ((msg.points[0].y<=1 || msg.points[6].y>-1) && !action_lock && current_time-follow_wall_time>15 && (current_time-turn_time>30 || first_turn))//&& turn_count>0 && current_time-turn_time>30)
  {
    follow_wall_time = ros::Time::now().toSec();
    action_lock = 1;
@@ -93,5 +93,6 @@ void Control_Node::poseMeassageReceived(const geometry_msgs::PoseStamped &msg)
 {
   double temp_theta_z = msg.pose.orientation.z;
   double temp_theta_w = msg.pose.orientation.w;
-  current_theta=atan2(temp_theta_z,temp_theta_w);
+  current_theta=atan2(temp_theta_z,temp_theta_w)*2;
+  std::cout<<"current orientation is: "<<current_theta<<std::endl;
 }

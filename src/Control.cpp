@@ -20,6 +20,9 @@ bool Control::pose_correction(double theta,double cheat_time)
   geometry_msgs::TwistStamped correct_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
   ros::Publisher velocity =n.advertise<geometry_msgs::TwistStamped>("/control",1);
+  // ros::Publisher test_theta = n.advertise<geometry_msgs::Pose2D>("/test_theta",1);
+  // geometry_msgs::Pose2D temp_theta;
+  // temp_theta.theta=theta;
   if (abs(0-theta)<threshold && !lock)
   {
       correct.angular.z=(0-theta);///int(MOVE_TIME/CLOCK_SPEED);
@@ -62,6 +65,7 @@ bool Control::pose_correction(double theta,double cheat_time)
       ROS_INFO_STREAM("The robot is now correcting pose!");
       correct_pub.header.stamp.sec=ros::Time::now().toSec();
       velocity.publish(correct_pub);
+      // test_theta.publish(temp_theta);
       ros::spinOnce();
       rate.sleep();
    }
