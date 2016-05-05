@@ -25,8 +25,8 @@ void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
   double delta_t = current_time_stamp - pre_time_stamp;
   if (current_time_stamp!=0)
   {
-     ROS_INFO_STREAM("Control data receieved");
-     std::cout<<"Delta_T is  "<<delta_t<<"s\n";
+     // ROS_INFO_STREAM("Control data receieved");
+     // std::cout<<"Delta_T is  "<<delta_t<<"s\n";
   }
   slam_ptr->predict(l_vel, r_vel, delta_t);
   pre_time_stamp = current_time_stamp;
@@ -77,21 +77,18 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
   }
 
   /* find matches */
-  std::vector<std::array<size_t, 3> > matches; /* Vector of array with elmts [lmk_index_org, lmk_index_hist, sim_meas] */
-  slam_ptr->landmark_match(measurements, descriptors, matches, max_signature_threshold, match_threshold); /* gets the matches */
+  std::vector<std::array<size_t, 3> > matches, new_points; /* Vector of array with elmts [lmk_index_org, lmk_index_hist, sim_meas] */
+  slam_ptr->landmark_match(measurements, descriptors, matches, new_points, max_signature_threshold, match_threshold, new_points_threshold); /* gets the matches */
   //std::cout<<matches.size()<<std::endl;
   
   /* The flag determines which landmark matches are new. flag = true => correspondance; flag = false => new */
-  bool flags[landmark_count];
-  for(int i=0; i<landmark_count; i++) flags[i] = false;
-  std::cout<<"Total points: "<<landmark_count<<" Matched points: "<<matches.size()<<" New points: "<<landmark_count-matches.size()<<std::endl;
+  // std::cout<<"Total points: "<<landmark_count<<" Matched points: "<<matches.size()<<" New points: "<<new_points.size()<<std::endl;
   
   /* add matched elements to the H stack */
   Eigen::VectorXd matched_measurement(3*matches.size());
   Eigen::VectorXd matched_idx(matches.size());
   for(int i=0; i<matches.size(); i++)
   {
-    flags[matches[i][0]] = true;
     // std::cout<<"dist:"<<matches[i][2]<<std::endl;
     matched_measurement(3*i) = measurements(0, matches[i][0]);
     matched_measurement(3*i+1) = measurements(1, matches[i][0]);
@@ -103,17 +100,16 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
 
 
   /* New landmarks are added to the history of landmarks */
-  for(int i=0; i<landmark_count; i++)
+  for(int i=0; i<new_points.size(); i++)
   {
-    if(!flags[i])
-      slam_ptr->add_landmark(measurements(0,i), measurements(1,i), measurements(2,i), descriptors[i]);
+      slam_ptr->add_landmark(measurements(0,new_points[i][0]), measurements(1,new_points[i][0]), measurements(2,new_points[i][0]), descriptors[new_points[i][0]]);
   }
-  std::cout<<"landmark_count: ";
-  slam_ptr->landmark_count();
+  // slam_ptr->print_state();
 }
 
 void EKF_SLAM_Node::updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t level)
 {
   max_signature_threshold = config.max_signature_threshold;
   match_threshold = config.match_threshold;
+  new_points_threshold = config.new_points_threshold;
 }
