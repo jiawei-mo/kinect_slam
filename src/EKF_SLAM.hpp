@@ -40,7 +40,7 @@ public:
 	EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov);
 	void predict(double l, double r, double t);
 	void add_landmark(double x, double y, double sig, boost::dynamic_bitset<> dscrt);
-	void measurement_update(Eigen::VectorXd measurement, Eigen::VectorXd measurement_idx);
+	void measurement_update(Eigen::VectorXd measurement, Eigen::VectorXd measurement_idx, ros::Time time);
 	void landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<std::array<size_t, 3> >& matches, std::vector<std::array<size_t, 3> >& new_points, double max_signature_threshold, double match_threshold, double new_points_threshold) const;
 	void landmark_pcl_pub();
 	void print_state();

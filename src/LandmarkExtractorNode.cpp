@@ -68,6 +68,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   double cx = info->K[2];
   double fy = info->K[4];
   double cy = info->K[5];
+  new_measurement_msg.header.stamp = info->header.stamp;
   new_measurement_msg.position_x.clear();
   new_measurement_msg.position_y.clear();
   new_measurement_msg.position_signature.clear();

@@ -107,15 +107,16 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	// std::cout<<"After: "<<std::endl<<state_mean.block<3,1>(0,0)<<std::endl;
 
 	//test_prediction
-	geometry_msgs::PoseStamped test_pose;
-	test_pose.header.stamp = ros::Time::now();
-	test_pose.header.frame_id = "/map";
-	test_pose.pose.position.x = state_mean(0);
-	test_pose.pose.position.y = state_mean(1);
-	test_pose.pose.position.z = 0;
-	test_pose.pose.orientation.z = sin(state_mean(2)/2);
-	test_pose.pose.orientation.w = cos(state_mean(2)/2);
-    robot_state_pub.publish(test_pose);
+	//TODO
+	// geometry_msgs::PoseStamped test_pose;
+	// test_pose.header.stamp = ros::Time::now();
+	// test_pose.header.frame_id = "/map";
+	// test_pose.pose.position.x = state_mean(0);
+	// test_pose.pose.position.y = state_mean(1);
+	// test_pose.pose.position.z = 0;
+	// test_pose.pose.orientation.z = sin(state_mean(2)/2);
+	// test_pose.pose.orientation.w = cos(state_mean(2)/2);
+ //    robot_state_pub.publish(test_pose);
 }
 
 void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitset<> dscrt)
@@ -153,7 +154,7 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 }
 
 /* EKF SLAM update */
-void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd measurements_idx)
+void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd measurements_idx, ros::Time time)
 {
 	// std::cout<<"Update"<<std::endl;
 	if(accu_flag)
@@ -232,7 +233,7 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
 	//std::cout<<"end"<<std::endl;
 	geometry_msgs::PoseStamped test_pose;
-	test_pose.header.stamp = ros::Time::now();
+	test_pose.header.stamp = time;
 	test_pose.header.frame_id = "/map";
 	test_pose.pose.position.x = state_mean(0);
 	test_pose.pose.position.y = state_mean(1);
