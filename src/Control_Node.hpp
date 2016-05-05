@@ -7,6 +7,7 @@
 #include <sensor_msgs/PointCloud.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include "Control.hpp"
 #define OBSTACLE_FRONT 0 //2
 #define OBSTACLE_SIDES 3
