@@ -2,7 +2,7 @@
 
 
 PointCloudNode::PointCloudNode():
-	pioneer_sub(nh, "pose", 1),
+	pioneer_sub(nh, "/pose", 1),
 	dep_sub(nh, "/camera/depth/image_rect", 1),
 	pioneer_sync(PioneerPolicy(10), pioneer_sub, dep_sub)
 {
@@ -19,15 +19,15 @@ PointCloudNode::PointCloudNode():
 }
 
 
-void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStamped& state_msg, const sensor_msgs::ImageConstPtr& dep)
+void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& state_msg, const sensor_msgs::ImageConstPtr& dep)
 {
 	// PROCESS STATE ESTIAMATE MESSAGE
-	float x = state_msg.pose.position.x;
-	float y = state_msg.pose.position.y;
+	float x = state_msg->pose.position.x;
+	float y = state_msg->pose.position.y;
 
 	// convert from quaternions to radians
-	double temp_theta_z = state_msg.pose.orientation.z;
-	double temp_theta_w = state_msg.pose.orientation.w;
+	double temp_theta_z = state_msg->pose.orientation.z;
+	double temp_theta_w = state_msg->pose.orientation.w;
 	double current_theta = atan2(temp_theta_z, temp_theta_w);
 	float th = (float)current_theta;
 	std::cout << "Raw state. " << ". X: " << x << ", Y: " << y << " Th: " << th << std::endl;
@@ -200,12 +200,12 @@ void PointCloudNode::build_octomap()
 }
 
 
-PointCloudPtr PointCloudNode::pt_filter(PointCloudPtr cloud, const std::string field, const float min_range = 0.0, const float max_range = 1.0)
+PointCloudPtr PointCloudNode::pt_filter(PointCloudPtr in_cloud, const std::string field, const float min_range = 0.0, const float max_range = 1.0)
 {
 	// pass through filter, remove points outside of "field" range limits
 	PointCloudPtr rval (new PointCloud());
 	pcl::PassThrough<Point> pass; // Create the filtering object
-	pass.setInputCloud(boost::make_shared<PointCloud>(*cloud));
+	pass.setInputCloud(boost::make_shared<PointCloud>(*in_cloud));
 	pass.setFilterFieldName(field);
 	pass.setFilterLimits(min_range, max_range);
 	pass.filter(*rval);

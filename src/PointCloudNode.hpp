@@ -19,7 +19,7 @@
 #include <pcl/common/transforms.h>
 #include <pcl/registration/icp.h>
 #include <pcl/filters/statistical_outlier_removal.h>
-#include "geometry_msgs/PoseStamped.h"
+#include <geometry_msgs/PoseStamped.h>
 #include <octomap/octomap.h>
 #include <octomap/ColorOcTree.h>
 #include <cv_bridge/cv_bridge.h> // for use in converting sim data
@@ -64,19 +64,19 @@ public:
 	~PointCloudNode(){};
 
 	// real world call back, no color PoseStampedConstPtr
-	void pioneer_callback(const geometry_msgs::PoseStamped&, const sensor_msgs::ImageConstPtr&);
+	void pioneer_callback(const geometry_msgs::PoseStampedConstPtr& state_msg, const sensor_msgs::ImageConstPtr&  dep);
 
-	void cloud_append(PointCloudPtr);
+	void cloud_append(PointCloudPtr new_cloud);
 	void build_octomap();
 
 	// transformation helpers
-	PointCloudPtr transform_cloud(PointCloudPtr, float, float, float, float, const std::string);
-	PointCloudPtr to_global(PointCloudPtr);
+	PointCloudPtr transform_cloud(PointCloudPtr in_cloud, float dx, float dy, float dz, float theta, const std::string axis);
+	PointCloudPtr to_global(PointCloudPtr in_cloud);
 
 	// filtering
-	PointCloudPtr pt_filter(PointCloudPtr, const std::string, const float, const float);
-	PointCloudPtr remove_floor(PointCloudPtr);
-	void voxel_filter(float);
+	PointCloudPtr pt_filter(PointCloudPtr in_cloud, const std::string field, const float min_range, const float max_range);
+	PointCloudPtr remove_floor(PointCloudPtr in_cloud);
+	void voxel_filter(float leafsize);
 
 	// simulate data for testing methods
 	PointCloudPtr simulate_circle(int, float);
