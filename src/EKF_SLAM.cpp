@@ -14,7 +14,7 @@ EKF_SLAM::EKF_SLAM()
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
 
-	 robot_state_pub = nh.advertise<kinect_slam::Pose2DMsg>("pose", 50);
+	 robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
 
 }
 
@@ -30,7 +30,7 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 	 0, KINECT_Y_VAR*KINECT_Y_VAR, 0,
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
-	robot_state_pub = nh.advertise<kinect_slam::Pose2DMsg>("pose", 50);
+	robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
 
 }
 
@@ -106,12 +106,14 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	// std::cout<<"After: "<<std::endl<<state_mean.block<3,1>(0,0)<<std::endl;
 
 	//test_prediction
-	kinect_slam::Pose2DMsg test_pose;
+	geometry_msgs::PoseStamped test_pose;
 	test_pose.header.stamp = ros::Time::now();
-	test_pose.header.frame_id = "pose";
-	test_pose.x = state_mean(0);
-	test_pose.y = state_mean(1);
-	test_pose.theta = state_mean(2);
+	test_pose.header.frame_id = "/map";
+	test_pose.pose.position.x = state_mean(0);
+	test_pose.pose.position.y = state_mean(1);
+	test_pose.pose.position.z = 0;
+	test_pose.pose.orientation.z = sin(state_mean(2)/2);
+	test_pose.pose.orientation.w = cos(state_mean(2)/2);
     robot_state_pub.publish(test_pose);
 }
 
@@ -228,13 +230,15 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	state_cov = (state_cov + state_cov.transpose()) / 2;
 	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
 	//std::cout<<"end"<<std::endl;
-	kinect_slam::Pose2DMsg cur_state;
-	cur_state.header.stamp = ros::Time::now();
-	cur_state.header.frame_id = "pose";
-	cur_state.x = state_mean(0);
-	cur_state.y = state_mean(1);
-	cur_state.theta = state_mean(2);
-	robot_state_pub.publish(cur_state);
+	geometry_msgs::PoseStamped test_pose;
+	test_pose.header.stamp = ros::Time::now();
+	test_pose.header.frame_id = "/map";
+	test_pose.pose.position.x = state_mean(0);
+	test_pose.pose.position.y = state_mean(1);
+	test_pose.pose.position.z = 0;
+	test_pose.pose.orientation.z = sin(state_mean(2)/2);
+	test_pose.pose.orientation.w = cos(state_mean(2)/2);
+    robot_state_pub.publish(test_pose);
 }
 
 void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<std::array<size_t, 3> >& matches, std::vector<std::array<size_t, 3> >& new_points, double max_signature_threshold, double match_threshold, double new_points_threshold)
