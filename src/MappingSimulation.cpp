@@ -1,13 +1,14 @@
-#include "PointCloudNode.hpp"
+#include "MappingSimulation.hpp"
 
 
-PointCloudNode::PointCloudNode():
-	pioneer_sub(nh, "pose", 1),
-	dep_sub(nh, "/camera/depth/image_rect", 1),
+MappingSimulation::MappingSimulation():
+	simulation_sub(nh, "pose", 1),
+	//simulation_sub(nh, "/tf", 1),
+	dep_sub(nh, "/camera/depth/image", 1), // for simulation
 	info_sub(nh, "/camera/rgb/camera_info", 1),
-	pioneer_sync(PioneerPolicy(10), pioneer_sub, dep_sub, info_sub)
+	simulation_sync(SimulationPolicy(10), simulation_sub, dep_sub, info_sub)
 {
-	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2, _3));
+	simulation_sync.registerCallback(boost::bind(&MappingSimulation::simulation_callback, this, _1, _2, _3));
 	// state mean
 	state_mean = Eigen::Vector3d::Zero();
 	init_pose = Eigen::Vector3d::Zero();
@@ -20,17 +21,21 @@ PointCloudNode::PointCloudNode():
 }
 
 
-void PointCloudNode::pioneer_callback(const kinect_slam::Pose2DMsgConstPtr& state_msg, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
+//void MappingSimulation::simulation_callback(const geometry_msgs::TransformStamped::ConstPtr& state_msg, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
+void MappingSimulation::simulation_callback(const nav_msgs::Odometry::ConstPtr& state_msg, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
 {
 	// PROCESS STATE ESTIAMATE MESSAGE
-	float x = state_msg->x;
-	float y = state_msg->y;
-	float th = state_msg->theta;
-	std::cout << "Raw state. " << ". X: " << x << ", Y: " << y << " Th: " << th << std::endl;
-
+	float x = state_msg->pose.pose.position.x;
+	float y = state_msg->pose.pose.position.y;
+	// extract orientation / yaw from pose data
+	// this is still probably wrong
+	tf::Pose pose;
+	tf::poseMsgToTF(state_msg->pose.pose, pose);
+	double th = tf::getYaw(pose.getRotation());
+	// save estimates in class variables
 	state_mean << x,
 				  y,
-				  th;
+				  (float)th;
 	if (init_pose.isZero(0) && init_pose.isZero(1) && init_pose.isZero(2)) {
 		std::cout << "Setting init pose:" << endl;
 		init_pose = state_mean;
@@ -38,20 +43,30 @@ void PointCloudNode::pioneer_callback(const kinect_slam::Pose2DMsgConstPtr& stat
 	}
 
 	// PROCESS IMAGE MESSAGES
+	//cv::Mat image_color = cv_bridge::toCvCopy(img)->image;
 	cv::Mat image_depth = cv_bridge::toCvCopy(dep)->image;
 	// set any nan values to zero
 	cv::patchNaNs(image_depth, 0.0);
 
+	// get camera intrinsics
+	float fx = info->K[0];
+	float fy = info->K[4];
+	float cx = info->K[2];
+	float cy = info->K[5];
+
 	// produce a point cloud
 	PointCloudPtr pointcloud_msg (new PointCloud);
+	//pointcloud_msg->header = dep->header;
 	Point pt;
 	for (int y = 0; y < image_depth.rows; y+=4) {
 		for (int x = 0; x < image_depth.cols; x+=4) {
 			float depth = image_depth.at<short int>(cv::Point(x,y)) / 1000.0;
+			//cv::Vec3b color = image_color.at<cv::Vec3b>(cv::Point(x,y));
 			if (depth > 0.0) {
-				pt.x = x;
-				pt.y = y;
+				pt.x = (x - cx) * depth / fx;
+				pt.y = (y - cy) * depth / fy;
 				pt.z = depth;
+				//pt.rgb = (int)color[0] << 16 | (int)color[1] << 8 | (int)color[2];
 				pointcloud_msg->points.push_back(pt);
 			}
 		}
@@ -68,7 +83,7 @@ void PointCloudNode::pioneer_callback(const kinect_slam::Pose2DMsgConstPtr& stat
 
 
 
-PointCloudPtr PointCloudNode::transform_cloud(PointCloudPtr in_cloud,
+PointCloudPtr MappingSimulation::transform_cloud(PointCloudPtr in_cloud,
 	float dx=0.0, float dy=0.0, float dz=0.0, float theta=0.0, const std::string axis="z")
 {
 	// create transformation matrix
@@ -91,7 +106,7 @@ PointCloudPtr PointCloudNode::transform_cloud(PointCloudPtr in_cloud,
 }
 
 
-PointCloudPtr PointCloudNode::to_global(PointCloudPtr in_cloud)
+PointCloudPtr MappingSimulation::to_global(PointCloudPtr in_cloud)
 {
 	// this just implements a specific transformation using transform_cloud
 
@@ -117,7 +132,7 @@ PointCloudPtr PointCloudNode::to_global(PointCloudPtr in_cloud)
 }
 
 
-void PointCloudNode::cloud_append(PointCloudPtr new_cloud)
+void MappingSimulation::cloud_append(PointCloudPtr new_cloud)
 {
 	// remove some of the new points that are very far away, or super close
 	PointCloudPtr filt1 = pt_filter(new_cloud, "z", 0.2, 15.0);
@@ -153,7 +168,7 @@ void PointCloudNode::cloud_append(PointCloudPtr new_cloud)
 }
 
 
-PointCloudPtr PointCloudNode::remove_floor(PointCloudPtr in_cloud)
+PointCloudPtr MappingSimulation::remove_floor(PointCloudPtr in_cloud)
 {
 	float min_y = 99999.0;
 	for(size_t i=0; i < in_cloud->points.size(); ++i) {
@@ -173,30 +188,20 @@ PointCloudPtr PointCloudNode::remove_floor(PointCloudPtr in_cloud)
 
 
 
-void PointCloudNode::build_octomap()
+void MappingSimulation::build_octomap()
 {
 	octomap::ColorOcTree tree(0.1);
-
-	//octomap::Pointcloud oct_pc;
-	//octomap::point3d sensor_origin(0.0f,0.0f,0.0f);
-
 	for(PointCloud::iterator it = cloud->begin(); it != cloud->end(); it++) {
 		float x=it->x, y=it->y, z=it->z;
 		//uint8_t r=it->r, g=it->g, b=it->b;
 		tree.updateNode((double)x, (double)y, (double)z, true);
 		//tree.integrateNodeColor(x, y, z, r, g, b);
 	}
-	//tree.insertPointCloud(oct_pc, sensor_origin, -1, false, false);
-
     tree.write("my_octree.ot");
-    //tree.writeBinary("my_octree.bt");
-    //octomath::Pose6D origin(0,0,0,0,0,0);
-    //octomap::MapNode<octomap::octree> octomap(tree,origin);
-	//octomap.writeMap(newfileName);
 }
 
 
-PointCloudPtr PointCloudNode::pt_filter(PointCloudPtr cloud, const std::string field, const float min_range = 0.0, const float max_range = 1.0)
+PointCloudPtr MappingSimulation::pt_filter(PointCloudPtr cloud, const std::string field, const float min_range = 0.0, const float max_range = 1.0)
 {
 	// pass through filter, remove points outside of "field" range limits
 	PointCloudPtr rval (new PointCloud());
@@ -208,7 +213,7 @@ PointCloudPtr PointCloudNode::pt_filter(PointCloudPtr cloud, const std::string f
 	return rval;
 }
 
-void PointCloudNode::voxel_filter(float leafsize=0.1)
+void MappingSimulation::voxel_filter(float leafsize=0.1)
 {
 	// Divide space into voxels, replaces points within a voxels by their centroids.
 	PointCloudPtr rval (new PointCloud());
@@ -221,90 +226,8 @@ void PointCloudNode::voxel_filter(float leafsize=0.1)
 	cloud = rval;
 }
 
-/*
-PointCloudPtr PointCloudNode::icp(PointCloudPtr cloud)
-{
 
-	// ICP alginment of clouds
-	pcl::IterativeClosestPoint<Point, Point> icp;
-	icp.setInputSource(cloud);
-	icp.setInputTarget(new_cloud);
-	PointCloudPtr tmp (new PointCloud());
-	icp.align(*tmp);
-	std::cout << "has converged:" << icp.hasConverged() << " score: " <<
-	icp.getFitnessScore() << std::endl;
-	std::cout << icp.getFinalTransformation() << std::endl;
-	cloud = tmp;
-}
-*/
-
-
-
-PointCloudPtr PointCloudNode::simulate_circle(int num_points, float num_loops) {
-	PointCloudPtr rval (new PointCloud());
-	//int rgb1 = 255 << 16 | 0 << 8 | 0;
-	for (size_t i = 0; i < num_points; ++i) {
-		Point pt;
-		float pos = PI * 2.0f * num_loops * ((1.0f * i) / (1.0f * num_points));
-		pt.x = cos(pos);
-		pt.y = sin(pos);
-		pt.z = 0.0;
-		//pt.rgb=rgb1;
-		rval->points.push_back(pt);
-	}
-	rval->width = (int) rval->points.size ();
-  	rval->height = 1;
-	rval->points.resize (rval->width * rval->height);
-	return rval;
-}
-
-
-
-PointCloudPtr PointCloudNode::simulate_square(int num_points, float num_loops) {
-	PointCloudPtr rval (new PointCloud());
-	//int rgb1 = 255 << 16 | 0 << 8 | 0;
-	int side_len = static_cast<int> (floor( (float)num_points / 4.0f ));
-
-	// base and top of square
-	for (size_t i = 0; i < side_len; ++i) {
-		// bottom
-		Point bottom;
-		bottom.x = 1.0f + (1.0f * i / (float)side_len);
-		bottom.y = 1.0;
-		bottom.z = 1.0;
-		//bottom.rgb=rgb1;
-		rval->points.push_back(bottom);
-		// top
-		Point top;
-		top.x = 1.0f + (1.0f * i / (float)side_len);
-		top.y = 2.0;
-		top.z = 1.0;
-		//top.rgb=rgb1;
-		rval->points.push_back(top);
-		// left
-		Point left;
-		bottom.x = 1.0;
-		bottom.y = 1.0f + (1.0f * i / (float)side_len);
-		bottom.z = 1.0;
-		//bottom.rgb=rgb1;
-		rval->points.push_back(bottom);
-		// right
-		Point right;
-		right.x = 2.0;
-		right.y = 1.0 + (1.0f * i / (float)side_len);
-		right.z = 1.0;
-		//right.rgb=rgb1;
-		rval->points.push_back(right);
-	}
-	rval->width = (int) rval->points.size ();
-  	rval->height = 1;
-	rval->points.resize (rval->width * rval->height);
-	return rval;
-}
-
-
-
-void PointCloudNode::print_cloud(PointCloudPtr cloud)
+void MappingSimulation::print_cloud(PointCloudPtr cloud)
 {
 	size_t cloud_sz = cloud->points.size();
 	for (size_t i = 0; i < cloud_sz; ++i) {
@@ -315,7 +238,7 @@ void PointCloudNode::print_cloud(PointCloudPtr cloud)
 	}
 }
 
-void PointCloudNode::visualize_cloud(PointCloudPtr cloud)
+void MappingSimulation::visualize_cloud(PointCloudPtr cloud)
 {
 	pcl::visualization::PCLVisualizer viewer;
 	viewer.setBackgroundColor(0, 0, 0);
