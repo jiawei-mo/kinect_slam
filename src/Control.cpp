@@ -7,7 +7,7 @@ bool Control::pose_correction(double theta,double cheat_time)
   // robot = new ArRobot();
   lock=0;
   double time_threshold = 80;
-  double BASE_SPEED = 0.2, MOVE_TIME = 2, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.4, MOVE_TIME = 2, CLOCK_SPEED = 1;
   if (cheat_time>time_threshold)
   {
     BASE_SPEED = 0.2;
@@ -63,7 +63,7 @@ bool Control::pose_correction(double theta,double cheat_time)
      }
       count++;
       ROS_INFO_STREAM("The robot is now correcting pose!");
-      correct_pub.header.stamp.sec=ros::Time::now().toSec();
+      correct_pub.header.stamp = ros::Time::now();
       velocity.publish(correct_pub);
       // test_theta.publish(temp_theta);
       ros::spinOnce();
@@ -76,7 +76,7 @@ bool Control::pose_correction(double theta,double cheat_time)
 
 bool Control::follow_wall(int flag)
 {
-  double BASE_SPEED = 0.2, MOVE_TIME = 3, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.4, MOVE_TIME = 3, CLOCK_SPEED = 1;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   geometry_msgs::Twist follow_wall_first;
@@ -116,7 +116,7 @@ bool Control::follow_wall(int flag)
      }
       count++;
       ROS_INFO_STREAM("The robot is now avoiding wall!");
-      follow_wall_pub.header.stamp.sec=ros::Time::now().toSec();
+      follow_wall_pub.header.stamp=ros::Time::now();
       velocity.publish(follow_wall_pub);
       ros::spinOnce();
       rate.sleep();
@@ -169,7 +169,7 @@ bool Control::turn_left()
   msg.angular.z = 0;
   msg_pub.twist=msg;
   pub.publish(msg);
-  msg_pub.header.stamp.sec = ros::Time::now().toSec();
+  msg_pub.header.stamp = ros::Time::now();
   control.publish(msg_pub);
 
   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED) //2
@@ -184,7 +184,7 @@ bool Control::turn_left()
          pub.publish(msg);
       }
       ROS_INFO_STREAM("The robot is now turning left!");
-      msg_pub.header.stamp.sec = ros::Time::now().toSec();
+      msg_pub.header.stamp = ros::Time::now();
       control.publish(msg_pub);
       count++;
       ros::spinOnce();
@@ -219,7 +219,7 @@ bool Control::turn_right()
          pub.publish(msg);
       }
       ROS_INFO_STREAM("The robot is now turning right!");
-      msg_pub.header.stamp.sec = ros::Time::now().toSec();
+      msg_pub.header.stamp = ros::Time::now();
       control.publish(msg_pub);
       count++;
       ros::spinOnce();
@@ -251,7 +251,7 @@ bool Control::go_straight()
       pub.publish(msg);
 
     }
-      msg_pub.header.stamp.sec = ros::Time::now().toSec();
+      msg_pub.header.stamp = ros::Time::now();
       control.publish(msg_pub);
       ROS_INFO_STREAM("The robot is now moving forward!");
       count++;

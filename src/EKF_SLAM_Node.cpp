@@ -23,10 +23,10 @@ void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
   double r_vel = ctrl.twist.angular.z;
   double current_time_stamp = ctrl.header.stamp.sec;
   double delta_t = current_time_stamp - pre_time_stamp;
-  if (current_time_stamp!=0)
+  if (current_time_stamp>0)
   {
-     // ROS_INFO_STREAM("Control data receieved");
-     // std::cout<<"Delta_T is  "<<delta_t<<"s\n";
+     ROS_INFO_STREAM("Control data receieved");
+     std::cout<<"Delta_T is  "<<delta_t<<"s\n";
   }
   slam_ptr->predict(l_vel, r_vel, delta_t);
   pre_time_stamp = current_time_stamp;
