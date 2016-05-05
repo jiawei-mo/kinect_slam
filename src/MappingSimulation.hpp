@@ -19,12 +19,14 @@
 #include <pcl/common/transforms.h>
 #include <pcl/registration/icp.h>
 #include <pcl/filters/statistical_outlier_removal.h>
-#include <geometry_msgs/Pose2D.h>  // for state message
+#include <geometry_msgs/TransformStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <octomap/octomap.h>
 #include <octomap/ColorOcTree.h>
 #include <cv_bridge/cv_bridge.h> // for use in converting sim data
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <tf/transform_datatypes.h>
 #include <string>
 #include "kinect_slam/Pose2DMsg.h"
 
@@ -42,10 +44,11 @@
 typedef pcl::PointXYZ Point;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudPtr;
-typedef message_filters::sync_policies::ApproximateTime<kinect_slam::Pose2DMsg, sensor_msgs::Image, sensor_msgs::CameraInfo> PioneerPolicy;
-typedef boost::shared_ptr<kinect_slam::Pose2DMsg const> Pose2DMsgConstPtr;
+typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::Image, sensor_msgs::CameraInfo> SimulationPolicy;
+//typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::TransformStamped, sensor_msgs::Image, sensor_msgs::CameraInfo> SimulationPolicy;
 
-class PointCloudNode
+
+class MappingSimulation
 {
 private:
 	int cloud_sz;
@@ -59,19 +62,23 @@ private:
 	message_filters::Subscriber<sensor_msgs::Image> dep_sub;
 	message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub;
 
-	message_filters::Subscriber<kinect_slam::Pose2DMsg> pioneer_sub;
-	message_filters::Synchronizer<PioneerPolicy> pioneer_sync;
+	message_filters::Subscriber<nav_msgs::Odometry> simulation_sub;
+	//message_filters::Subscriber<geometry_msgs::TransformStamped> simulation_sub;
+	message_filters::Synchronizer<SimulationPolicy> simulation_sync;
+
 	//message_filters::Subscriber<sensor_msgs::Image> img_sub; // for color
 
 
 public:
-	PointCloudNode();
-	~PointCloudNode(){};
+	MappingSimulation();
+	~MappingSimulation(){};
 
-	// real world call back, no color PoseStampedConstPtr
-	void pioneer_callback(const kinect_slam::Pose2DMsgConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
-	// real world, with color
-	// void pioneer_callback
+	// simulation callback, color
+	//void simulation_callback(const nav_msgs::Odometry::ConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
+	// simulation callback, no color
+	void simulation_callback(const nav_msgs::Odometry::ConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
+	// simulation callback transform message
+	//void simulation_callback(const geometry_msgs::TransformStamped::ConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
 
 	void cloud_append(PointCloudPtr);
 	void build_octomap();
@@ -84,10 +91,6 @@ public:
 	PointCloudPtr pt_filter(PointCloudPtr, const std::string, const float, const float);
 	PointCloudPtr remove_floor(PointCloudPtr);
 	void voxel_filter(float);
-
-	// simulate data for testing methods
-	PointCloudPtr simulate_circle(int, float);
-	PointCloudPtr simulate_square(int, float);
 
 	// methods to validate intermediate results
 	void print_cloud(PointCloudPtr);
