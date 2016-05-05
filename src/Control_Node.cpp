@@ -82,7 +82,8 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    double cheat_time = current_time - turn_time;
    if (!action_lock)
    { 
-     myCtrl.pose_correction(current_theta,cheat_time);
+     action_lock = 1;
+     action_lock = myCtrl.pose_correction(current_theta,cheat_time);
    }
 }
 
