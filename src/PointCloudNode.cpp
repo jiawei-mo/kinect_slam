@@ -4,10 +4,9 @@
 PointCloudNode::PointCloudNode():
 	pioneer_sub(nh, "pose", 1),
 	dep_sub(nh, "/camera/depth/image_rect", 1),
-	info_sub(nh, "/camera/rgb/camera_info", 1),
-	pioneer_sync(PioneerPolicy(10), pioneer_sub, dep_sub, info_sub)
+	pioneer_sync(PioneerPolicy(10), pioneer_sub, dep_sub)
 {
-	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2, _3));
+	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2));
 	// state mean
 	state_mean = Eigen::Vector3d::Zero();
 	init_pose = Eigen::Vector3d::Zero();
@@ -20,12 +19,17 @@ PointCloudNode::PointCloudNode():
 }
 
 
-void PointCloudNode::pioneer_callback(const kinect_slam::Pose2DMsgConstPtr& state_msg, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
+void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStamped& state_msg, const sensor_msgs::ImageConstPtr& dep)
 {
 	// PROCESS STATE ESTIAMATE MESSAGE
-	float x = state_msg->x;
-	float y = state_msg->y;
-	float th = state_msg->theta;
+	float x = state_msg.pose.position.x;
+	float y = state_msg.pose.position.y;
+
+	// convert from quaternions to radians
+	double temp_theta_z = state_msg.pose.orientation.z;
+	double temp_theta_w = state_msg.pose.orientation.w;
+	double current_theta = atan2(temp_theta_z, temp_theta_w);
+	float th = (float)current_theta;
 	std::cout << "Raw state. " << ". X: " << x << ", Y: " << y << " Th: " << th << std::endl;
 
 	state_mean << x,
