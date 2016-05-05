@@ -74,38 +74,38 @@ bool Control::follow_wall(int flag)
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   geometry_msgs::Twist follow_wall_first;
-  geometry_msgs::Twist follow_wall_second;
-  geometry_msgs::Twist follow_wall_rect;
+  // geometry_msgs::Twist follow_wall_second;
+  // geometry_msgs::Twist follow_wall_rect;
   geometry_msgs::TwistStamped follow_wall_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
   ros::Publisher velocity =n.advertise<geometry_msgs::TwistStamped>("/control",1);
   if (flag==0)
   {
     follow_wall_first.angular.z = PI/15;
-    follow_wall_second.angular.z = -PI/20;  //15
-    follow_wall_rect.angular.z = PI/20;
+    // follow_wall_second.angular.z = -PI/20;  //15
+    // follow_wall_rect.angular.z = PI/20;
   }
   else
   {
-    follow_wall_first.angular.z = -PI/20;
-    follow_wall_second.angular.z = PI/15;
-    follow_wall_rect.angular.z = PI/20;
+    follow_wall_first.angular.z = -PI/15;
+    // follow_wall_second.angular.z = PI/15;
+    // follow_wall_rect.angular.z = PI/20;
   }
    while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
    {
     if (count == 0 || count == 1)
      {
       follow_wall_first.linear.x = BASE_SPEED;
-      follow_wall_rect.linear.z = BASE_SPEED; //publish the new velocity to rosaria
+      // follow_wall_rect.linear.z = BASE_SPEED; //publish the new velocity to rosaria
       pub.publish(follow_wall_first);
-      if (follow_wall_first.angular.z<0)
-      {
+      // if (follow_wall_first.angular.z<0)
+      // {
        follow_wall_pub.twist=follow_wall_first;
-      }
-      else
-      {
-       follow_wall_pub.twist=follow_wall_rect;
-      }
+      // }
+      // else
+      // {
+      //  follow_wall_pub.twist=follow_wall_rect;
+      // }
       follow_wall_pub.twist.angular.z=follow_wall_pub.twist.angular.z/3;
      }
       count++;
@@ -115,31 +115,31 @@ bool Control::follow_wall(int flag)
       ros::spinOnce();
       rate.sleep();
    }
-   count=0;
-   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
-   {
-    if (count == 0 || count == 1)
-     {
-      follow_wall_second.linear.x = BASE_SPEED;
-      follow_wall_rect.linear.x = BASE_SPEED; //publish the new velocity to rosaria
-      pub.publish(follow_wall_second);
-      if (follow_wall_second.angular.z<0)
-      {
-        follow_wall_pub.twist=follow_wall_second;
-      }
-      else
-      {
-        follow_wall_pub.twist=follow_wall_rect;
-      }
-      follow_wall_pub.twist.angular.z=follow_wall_pub.twist.angular.z/3;
-     }
-      count++;
-      ROS_INFO_STREAM("The robot is now avoiding wall!");
-      follow_wall_pub.header.stamp.sec=ros::Time::now().toSec();
-      velocity.publish(follow_wall_pub);
-      ros::spinOnce();
-      rate.sleep();
-   }
+   // count=0;
+   // while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
+   // {
+   //  if (count == 0 || count == 1)
+   //   {
+   //    follow_wall_second.linear.x = BASE_SPEED;
+   //    follow_wall_rect.linear.x = BASE_SPEED; //publish the new velocity to rosaria
+   //    pub.publish(follow_wall_second);
+   //    if (follow_wall_second.angular.z<0)
+   //    {
+   //      follow_wall_pub.twist=follow_wall_second;
+   //    }
+   //    else
+   //    {
+   //      follow_wall_pub.twist=follow_wall_rect;
+   //    }
+   //    follow_wall_pub.twist.angular.z=follow_wall_pub.twist.angular.z/3;
+   //   }
+   //    count++;
+   //    ROS_INFO_STREAM("The robot is now avoiding wall!");
+   //    follow_wall_pub.header.stamp.sec=ros::Time::now().toSec();
+   //    velocity.publish(follow_wall_pub);
+   //    ros::spinOnce();
+   //    rate.sleep();
+   // }
 
    return 0;
 }
