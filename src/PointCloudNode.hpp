@@ -52,6 +52,7 @@ private:
 	Eigen::Vector3d init_pose;
 
 	ros::NodeHandle nh;
+	ros::Publisher pcl_pub;
 
 	message_filters::Subscriber<sensor_msgs::Image> dep_sub;
 	message_filters::Subscriber<geometry_msgs::PoseStamped> pioneer_sub;
@@ -65,7 +66,7 @@ public:
 
 	// real world call back, no color PoseStampedConstPtr
 	void pioneer_callback(const geometry_msgs::PoseStampedConstPtr& state_msg, const sensor_msgs::ImageConstPtr&  dep);
-
+	void publish_pointcloud();
 	void cloud_append(PointCloudPtr new_cloud);
 	void build_octomap();
 

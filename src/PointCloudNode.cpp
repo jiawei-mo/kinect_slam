@@ -7,6 +7,7 @@ PointCloudNode::PointCloudNode():
 	pioneer_sync(PioneerPolicy(10), pioneer_sub, dep_sub)
 {
 	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2));
+	pcl_pub = nh.advertise<PointCloud>("pcl_map", 1);
 	// state mean
 	state_mean = Eigen::Vector3d::Zero();
 	init_pose = Eigen::Vector3d::Zero();
@@ -334,7 +335,7 @@ void PointCloudNode::visualize_cloud(PointCloudPtr cloud)
 	}
 }
 
-void PointCloudNode::void publish_pointcloud()
+void PointCloudNode::publish_pointcloud()
 {
 	cloud->header.frame_id = "/map";
 	cloud->is_dense = false;
