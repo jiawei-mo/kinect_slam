@@ -69,7 +69,9 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	cloud_append(pointcloud_msg);
 	voxel_filter(0.1);
 	build_octomap();
-	//publish_pointcloud():
+	if (num_frames % 10 == 0){
+		publish_pointcloud();
+	}
 }
 
 

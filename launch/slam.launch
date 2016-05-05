@@ -2,4 +2,5 @@
 	<node pkg="kinect_slam" type="landmark_node" name="landmark_node" output="screen"/>
 	<node pkg="kinect_slam" type="control_node" name="control_node" output="screen"/>
 	<node pkg="kinect_slam" type="slam_node" name="slam_node" output="screen"/>
+	<node pkg="kinect_slam" type="pc_node" name="pc_node" output="screen"/>
 </launch>
