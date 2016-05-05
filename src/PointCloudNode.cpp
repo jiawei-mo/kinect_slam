@@ -68,6 +68,7 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	cloud_append(pointcloud_msg);
 	voxel_filter(0.1);
 	build_octomap();
+	//publish_pointcloud():
 }
 
 
@@ -333,4 +334,11 @@ void PointCloudNode::visualize_cloud(PointCloudPtr cloud)
 	}
 }
 
+void PointCloudNode::void publish_pointcloud()
+{
+	cloud->header.frame_id = "/map";
+	cloud->is_dense = false;
+	pcl_conversions::toPCL(ros::Time::now(), cloud->header.stamp);
+	pcl_pub.publish(cloud);
+}
 
