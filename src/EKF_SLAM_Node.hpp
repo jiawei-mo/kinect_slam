@@ -23,6 +23,7 @@ private:
 
   double max_signature_threshold;
   double match_threshold;
+  double new_points_threshold;
   double pre_time_stamp;
 public:
 	EKF_SLAM_Node();

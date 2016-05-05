@@ -237,7 +237,7 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	robot_state_pub.publish(cur_state);
 }
 
-void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<std::array<size_t, 3> >& matches, double max_signature_threshold, double match_threshold)
+void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<std::array<size_t, 3> >& matches, std::vector<std::array<size_t, 3> >& new_points, double max_signature_threshold, double match_threshold, double new_points_threshold)
 {
 	for(size_t i=0;i<srcKeyPoints.cols();i++)
   {
@@ -265,10 +265,15 @@ void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynami
       std::array<size_t, 3> match_i = {i, idx, dist};
       matches.push_back(match_i);
     }
+    else if(dist > new_points_threshold && idx>0)
+    {
+      std::array<size_t, 3> np_i = {i, idx, dist};
+      new_points.push_back(np_i);
+    }
   }
 }
 
-void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<std::array<size_t, 3> >& matches, double max_signature_threshold, double match_threshold) const
+void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<std::array<size_t, 3> >& matches, std::vector<std::array<size_t, 3> >& new_points, double max_signature_threshold, double match_threshold, double new_points_threshold) const
 {
 	Eigen::MatrixXd destKeyPoints(3, num_landmarks);
 	for(int i=0; i<num_landmarks; i++)
@@ -279,10 +284,10 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
 	}
 	std::vector< boost::dynamic_bitset<> > destDescriptors = descriptorDB;
 
-  std::vector<std::array<size_t, 3>> l_matches;
-  std::vector<std::array<size_t, 3>> r_matches;
+  // std::vector<std::array<size_t, 3>> l_matches;
+  // std::vector<std::array<size_t, 3>> r_matches;
 
-  match(srcKeyPoints, srcDescriptors, destKeyPoints, destDescriptors, matches, max_signature_threshold, match_threshold);
+  match(srcKeyPoints, srcDescriptors, destKeyPoints, destDescriptors, matches, new_points, max_signature_threshold, match_threshold, new_points_threshold);
   // match(destKeyPoints, destDescriptors, srcKeyPoints, srcDescriptors, r_matches, max_signature_threshold, match_threshold);
 
   // for(int i=0; i<l_matches.size(); i++)
