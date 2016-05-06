@@ -15,7 +15,7 @@ bool Control::pose_correction(double theta,double cheat_time)
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   rate.reset();
-  double threshold=PI/20;
+  double threshold=PI/90;
   geometry_msgs::Twist correct;
   geometry_msgs::TwistStamped correct_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
@@ -77,7 +77,7 @@ bool Control::pose_correction(double theta,double cheat_time)
 
 bool Control::follow_wall(int flag)
 {
-  double BASE_SPEED = 0.2, MOVE_TIME = 4, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.3, MOVE_TIME = 3, CLOCK_SPEED = 1;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   geometry_msgs::Twist follow_wall_first;
@@ -265,4 +265,40 @@ bool Control::go_straight()
    }
 
    return 0;
+}
+
+bool Control::check_pose(double theta)
+{
+	double threshold = PI/90;
+	if ( abs(theta-0)<threshold || abs(theta-PI/2)<threshold || abs(theta - PI) <threshold || abs(theta - 3*PI/2)<threshold || abs(2*PI-theta)<threshold)
+	{
+		return 1;
+	}
+	else
+		return 0;
+}
+
+ double Control::compute_pose_correct(double theta)
+{
+  double threshold = PI/20;
+  if (abs(0-theta)<threshold)
+  {
+      return (0-theta);///int(MOVE_TIME/CLOCK_SPEED);
+  }
+  if (abs(2*PI-theta)<threshold)
+  {
+      return (2*PI-theta);///int(MOVE_TIME/CLOCK_SPEED);
+  }
+  if (abs(PI/2-theta)<threshold)
+  {
+      return (PI/2-theta);///int(MOVE_TIME/CLOCK_SPEED);
+  }
+  if (abs(PI-theta)<threshold)
+  {
+      return (PI-theta);///int(MOVE_TIME/CLOCK_SPEED);
+  }
+  if (abs(3*PI/2-theta)<threshold)
+  {
+       return (3*PI/2-theta);///int(MOVE_TIME/CLOCK_SPEED);
+  }
 }

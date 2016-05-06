@@ -15,6 +15,8 @@ public:
 	bool turn_left();
 	bool turn_right();
 	bool go_straight();
+	bool check_pose(double theta);
+	double compute_pose_correct(double theta);
 private:
 	ros::NodeHandle n;
 	bool lock;
