@@ -358,9 +358,12 @@ void EKF_SLAM::write_to_csv(std::string filename, std::vector< std::vector<doubl
 	myfile.open(filename);
 	for(size_t  i = 0; i < dat.size(); ++i) {
 		for (size_t j = 0; j < 12; ++j) {
-			myfile << dat[i][j] << ',';
+			if (j < 11) {
+				myfile << dat[i][j] << ',';
+			} else {
+				myfile << dat[i][j] << '\n';
+			}
 		}
-		myfile << '\n';
 	}
 	myfile.close();
 }

@@ -29,7 +29,7 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	// convert from quaternions to radians
 	double temp_theta_z = state_msg->pose.orientation.z;
 	double temp_theta_w = state_msg->pose.orientation.w;
-	double current_theta = atan2(temp_theta_z, temp_theta_w);
+	double current_theta = 2.0 * atan2(temp_theta_z, temp_theta_w);
 	float th = (float)current_theta;
 	std::cout << "Raw state. " << ". X: " << x << ", Y: " << y << " Th: " << th << std::endl;
 
@@ -68,9 +68,10 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	// pass new point cloud on for further processing
 	cloud_append(pointcloud_msg);
 	voxel_filter(0.1);
-	build_octomap();
-	if (num_frames % 10 == 0){
-		publish_pointcloud();
+
+	if (num_frames % 25 == 0){
+		build_octomap();
+		//publish_pointcloud();
 	}
 }
 
@@ -82,7 +83,6 @@ PointCloudPtr PointCloudNode::transform_cloud(PointCloudPtr in_cloud,
 	// create transformation matrix
 	Eigen::Affine3f T = Eigen::Affine3f::Identity();
 	if (theta != 0.0) {
-
 		if (axis == "x") {
 			T.rotate (Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitX()));
 		} else if (axis == "y") {
@@ -128,7 +128,7 @@ PointCloudPtr PointCloudNode::to_global(PointCloudPtr in_cloud)
 void PointCloudNode::cloud_append(PointCloudPtr new_cloud)
 {
 	// remove some of the new points that are very far away, or super close
-	PointCloudPtr filt1 = pt_filter(new_cloud, "z", 0.2, 15.0);
+	PointCloudPtr filt1 = pt_filter(new_cloud, "z", 0.2, 10.0);
 	//PointCloudPtr filt2 = pt_filter(filt1, "x", 1.0, 4.0);
 
 	// remove floor points
@@ -173,7 +173,7 @@ PointCloudPtr PointCloudNode::remove_floor(PointCloudPtr in_cloud)
 	pcl::PassThrough<Point> floor_filter;
 	floor_filter.setInputCloud(in_cloud);
 	floor_filter.setFilterFieldName("y");
-	floor_filter.setFilterLimits(min_y + .2, min_y + 1.75);
+	floor_filter.setFilterLimits(min_y + .1, min_y + 2.0);
 	//floor_filter.setFilterLimitsNegative(true);
 	floor_filter.filter(*no_floor_cloud);
 	return no_floor_cloud;
