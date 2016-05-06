@@ -26,6 +26,10 @@ private:
 	Eigen::VectorXd state_mean;
 	Eigen::MatrixXd state_cov;
 
+	// store robot state estimates for matlab trajectory evaluation
+	std::vector< std::vector<double> > propagation_history;
+	std::vector< std::vector<double> > update_history;
+
 	Eigen::Matrix3d G_accu;
 	Eigen::Matrix3d R;
 	bool accu_flag;
@@ -48,4 +52,5 @@ public:
 	void print_state();
 	void landmark_count();
 	void write_to_csv(std::string filename, std::vector< std::vector<double> > dat);
+	std::vector<double> state_to_vector();
 };
