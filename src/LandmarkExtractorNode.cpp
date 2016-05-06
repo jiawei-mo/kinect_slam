@@ -6,8 +6,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <math.h>
 #include <iostream>
-#define MIN_DEPTH 0.8
-#define MAX_DEPTH 3.5
+#define MIN_DEPTH 0
+#define MAX_DEPTH 400
 
 LandmarkExtractorNode::LandmarkExtractorNode(): 
   img_sub(nh, "/camera/rgb/image_rect_color", 1),
