@@ -24,7 +24,8 @@ private:
   double max_signature_threshold;
   double match_threshold;
   double new_points_threshold;
-  double pre_time_stamp;
+  ros::Time pre_time_stamp;
+  double ini_flag;
 public:
 	EKF_SLAM_Node();
 	~EKF_SLAM_Node(){};
