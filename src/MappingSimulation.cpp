@@ -27,15 +27,25 @@ void MappingSimulation::simulation_callback(const nav_msgs::Odometry::ConstPtr& 
 	// PROCESS STATE ESTIAMATE MESSAGE
 	float x = state_msg->pose.pose.position.x;
 	float y = state_msg->pose.pose.position.y;
+
 	// extract orientation / yaw from pose data
+	/*
 	// this is still probably wrong
 	tf::Pose pose;
 	tf::poseMsgToTF(state_msg->pose.pose, pose);
 	double th = tf::getYaw(pose.getRotation());
+	float th = (float)current_theta;
+	*/
+
+	float temp_theta_z = state_msg->pose.pose.orientation.z;
+	float temp_theta_w = state_msg->pose.pose.orientation.w;
+	float th = 2.0 * atan2(temp_theta_z, temp_theta_w);
+
+
 	// save estimates in class variables
 	state_mean << x,
 				  y,
-				  (float)th;
+				  th;
 	if (init_pose.isZero(0) && init_pose.isZero(1) && init_pose.isZero(2)) {
 		std::cout << "Setting init pose:" << endl;
 		init_pose = state_mean;
@@ -58,8 +68,8 @@ void MappingSimulation::simulation_callback(const nav_msgs::Odometry::ConstPtr& 
 	PointCloudPtr pointcloud_msg (new PointCloud);
 	//pointcloud_msg->header = dep->header;
 	Point pt;
-	for (int y = 0; y < image_depth.rows; y+=4) {
-		for (int x = 0; x < image_depth.cols; x+=4) {
+	for (int y = 0; y < image_depth.rows; y++) {
+		for (int x = 0; x < image_depth.cols; x++) {
 			float depth = image_depth.at<short int>(cv::Point(x,y)) / 1000.0;
 			//cv::Vec3b color = image_color.at<cv::Vec3b>(cv::Point(x,y));
 			if (depth > 0.0) {
@@ -77,8 +87,14 @@ void MappingSimulation::simulation_callback(const nav_msgs::Odometry::ConstPtr& 
 
 	// pass new point cloud on for further processing
 	cloud_append(pointcloud_msg);
-	voxel_filter(0.1);
-	build_octomap();
+	if (num_frames % 10 == 0) {
+		// remove floor points
+		PointCloudPtr tmp0 = remove_floor(cloud);
+		cloud = tmp0;
+		voxel_filter(0.1);
+		build_octomap();
+	}
+
 }
 
 
@@ -135,17 +151,14 @@ PointCloudPtr MappingSimulation::to_global(PointCloudPtr in_cloud)
 void MappingSimulation::cloud_append(PointCloudPtr new_cloud)
 {
 	// remove some of the new points that are very far away, or super close
-	PointCloudPtr filt1 = pt_filter(new_cloud, "z", 0.2, 15.0);
+	PointCloudPtr filt1 = pt_filter(new_cloud, "z", 0.1, 10.0);
 	//PointCloudPtr filt2 = pt_filter(filt1, "x", 1.0, 4.0);
-
-	// remove floor points
-	PointCloudPtr tmp0 = remove_floor(filt1);
 
 	// Create the filtering object
 	PointCloudPtr cloud_filtered (new PointCloud());
 	pcl::StatisticalOutlierRemoval<Point> sor;
-	sor.setInputCloud(tmp0);
-	sor.setMeanK (50);
+	sor.setInputCloud(filt1);
+	sor.setMeanK (25);
 	sor.setStddevMulThresh (1.0);
 	sor.filter (*cloud_filtered);
 
@@ -180,7 +193,7 @@ PointCloudPtr MappingSimulation::remove_floor(PointCloudPtr in_cloud)
 	pcl::PassThrough<Point> floor_filter;
 	floor_filter.setInputCloud(in_cloud);
 	floor_filter.setFilterFieldName("y");
-	floor_filter.setFilterLimits(min_y + .2, min_y + 1.75);
+	floor_filter.setFilterLimits(min_y + .1, min_y + 2.5);
 	//floor_filter.setFilterLimitsNegative(true);
 	floor_filter.filter(*no_floor_cloud);
 	return no_floor_cloud;
