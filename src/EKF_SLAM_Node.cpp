@@ -2,7 +2,7 @@
 #include <iostream>
 EKF_SLAM_Node::EKF_SLAM_Node()
 {
-  pre_time_stamp=-1;
+  ini_flag=1;
  // get_ini_time = nh.subscribe("/ini_time",1, &EKF_SLAM_Node::Initialize_Time_Recieved,this);
   repub_sub = nh.subscribe("/control", 1, &EKF_SLAM_Node::Ctrl_republish,this);
   vel_sub = nh.subscribe("/control_repub", 1, &EKF_SLAM_Node::CtrlCallback,this);
@@ -15,19 +15,21 @@ EKF_SLAM_Node::EKF_SLAM_Node()
 //for propagation
 void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
 {
-  if(pre_time_stamp==-1)
+  if(ini_flag==1)
   {
-    pre_time_stamp=ros::Time::now().toSec();
+    pre_time_stamp=ros::Time::now();
+    ini_flag=0;
   }
   double l_vel = ctrl.twist.linear.x;
   double r_vel = ctrl.twist.angular.z;
-  double current_time_stamp = ctrl.header.stamp.sec;
-  double delta_t = current_time_stamp - pre_time_stamp;
-  if (current_time_stamp>0)
-  {
+  ros::Time current_time_stamp = ctrl.header.stamp;
+  //double delta_t = (current_time_stamp.sec - pre_time_stamp.sec)+(current_time_stamp.nsec - pre_time_stamp.nsec)*1e-9;
+  double delta_t = (current_time_stamp.sec - pre_time_stamp.sec);
+  // if (current_time_stamp>0)
+  // {
      ROS_INFO_STREAM("Control data receieved");
      std::cout<<"Delta_T is  "<<delta_t<<"s\n";
-  }
+  // }
   slam_ptr->predict(l_vel, r_vel, delta_t);
   pre_time_stamp = current_time_stamp;
 }
@@ -41,7 +43,7 @@ void EKF_SLAM_Node::Ctrl_republish(const geometry_msgs::TwistStamped& ctrl)
   msg_pub.twist=ctrl.twist;
   while(ros::ok())
   {
-    msg_pub.header.stamp.sec=ros::Time::now().toSec();
+    msg_pub.header.stamp=ros::Time::now();
     repub.publish(msg_pub);
     ros::spinOnce();
     rate.sleep();

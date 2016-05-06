@@ -7,7 +7,7 @@ bool Control::pose_correction(double theta,double cheat_time)
   // robot = new ArRobot();
   lock=0;
   double time_threshold = 80;
-  double BASE_SPEED = 0.4, MOVE_TIME = 2, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.3, MOVE_TIME = 2, CLOCK_SPEED = 1;
   if (cheat_time>time_threshold)
   {
     BASE_SPEED = 0.2;
@@ -63,7 +63,8 @@ bool Control::pose_correction(double theta,double cheat_time)
      }
       count++;
       ROS_INFO_STREAM("The robot is now correcting pose!");
-      correct_pub.header.stamp = ros::Time::now();
+      correct_pub.header.stamp.sec = ros::Time::now().sec;
+      correct_pub.header.stamp.nsec =ros::Time::now().nsec;
       velocity.publish(correct_pub);
       // test_theta.publish(temp_theta);
       ros::spinOnce();
@@ -76,7 +77,7 @@ bool Control::pose_correction(double theta,double cheat_time)
 
 bool Control::follow_wall(int flag)
 {
-  double BASE_SPEED = 0.4, MOVE_TIME = 3, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.2, MOVE_TIME = 4, CLOCK_SPEED = 1;
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   geometry_msgs::Twist follow_wall_first;
@@ -85,15 +86,15 @@ bool Control::follow_wall(int flag)
   geometry_msgs::TwistStamped follow_wall_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
   ros::Publisher velocity =n.advertise<geometry_msgs::TwistStamped>("/control",1);
-  follow_wall_rect.angular.z = -PI/10;
+  follow_wall_rect.angular.z = -PI/8;
   if (flag==0)
   {
-    follow_wall_first.angular.z = PI/10;
+    follow_wall_first.angular.z = PI/8;
     // follow_wall_second.angular.z = -PI/20;  //15
   }
   else
   {
-    follow_wall_first.angular.z = -PI/10;
+    follow_wall_first.angular.z = -PI/8;
     // follow_wall_second.angular.z = PI/15;
     // follow_wall_rect.angular.z = PI/20;
   }
@@ -116,7 +117,8 @@ bool Control::follow_wall(int flag)
      }
       count++;
       ROS_INFO_STREAM("The robot is now avoiding wall!");
-      follow_wall_pub.header.stamp=ros::Time::now();
+      follow_wall_pub.header.stamp.sec=ros::Time::now().sec;
+      follow_wall_pub.header.stamp.nsec=ros::Time::now().nsec;
       velocity.publish(follow_wall_pub);
       ros::spinOnce();
       rate.sleep();
@@ -156,7 +158,7 @@ bool Control::turn_left()
   ros::Publisher pub = n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel", 1);
   geometry_msgs::Twist msg;
   geometry_msgs::TwistStamped msg_pub;
-  double BASE_SPEED = 0.1, MOVE_TIME = 1, CLOCK_SPEED = 0.25; //0.05,1,0.25
+  double BASE_SPEED = 0.2, MOVE_TIME = 4, CLOCK_SPEED = 1; //0.05,1,0.25
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
 
@@ -178,13 +180,14 @@ bool Control::turn_left()
       if (count == 0 || count == 1)
       {  
          msg.linear.x=BASE_SPEED;  
-         msg.angular.z = PI/int(MOVE_TIME/CLOCK_SPEED) / 2;//2
+         msg.angular.z = PI/2;//int(MOVE_TIME/CLOCK_SPEED) / 2;//2
          msg_pub.twist = msg;
          msg_pub.twist.angular.z= msg_pub.twist.angular.z/3;
          pub.publish(msg);
       }
       ROS_INFO_STREAM("The robot is now turning left!");
-      msg_pub.header.stamp = ros::Time::now();
+      msg_pub.header.stamp.sec = ros::Time::now().sec;
+      msg_pub.header.stamp.nsec = ros::Time::now().nsec;
       control.publish(msg_pub);
       count++;
       ros::spinOnce();
@@ -202,7 +205,7 @@ bool Control::turn_right()
   ros::Publisher control=n.advertise<geometry_msgs::TwistStamped>("/control",1);
   geometry_msgs::Twist msg;
   geometry_msgs::TwistStamped msg_pub;
-  double BASE_SPEED = 0.1, MOVE_TIME = 1, CLOCK_SPEED = 0.25; //1 && 0.25
+  double BASE_SPEED = 0.2, MOVE_TIME = 4, CLOCK_SPEED = 1; //1 && 0.25
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
 
@@ -213,13 +216,14 @@ bool Control::turn_right()
       if (count == 0 || count == 1)
       {
          msg.linear.x = BASE_SPEED;
-         msg.angular.z = -1 * PI/int(MOVE_TIME/CLOCK_SPEED) / 2;
+         msg.angular.z = -1 * PI/2;//int(MOVE_TIME/CLOCK_SPEED) / 2;
          msg_pub.twist=msg;
          msg_pub.twist.angular.z= msg_pub.twist.angular.z/3;
          pub.publish(msg);
       }
       ROS_INFO_STREAM("The robot is now turning right!");
-      msg_pub.header.stamp = ros::Time::now();
+      msg_pub.header.stamp.sec = ros::Time::now().sec;
+      msg_pub.header.stamp.nsec = ros::Time::now().nsec;
       control.publish(msg_pub);
       count++;
       ros::spinOnce();
@@ -237,7 +241,7 @@ bool Control::go_straight()
   ros::Publisher pub = n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel", 1);
   geometry_msgs::Twist msg;
   geometry_msgs::TwistStamped msg_pub;
-  double BASE_SPEED = 0.2, MOVE_TIME = 3, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.3, MOVE_TIME = 3, CLOCK_SPEED = 1;
 
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
@@ -251,7 +255,8 @@ bool Control::go_straight()
       pub.publish(msg);
 
     }
-      msg_pub.header.stamp = ros::Time::now();
+      msg_pub.header.stamp.sec = ros::Time::now().sec;
+      msg_pub.header.stamp.nsec = ros::Time::now().nsec;
       control.publish(msg_pub);
       ROS_INFO_STREAM("The robot is now moving forward!");
       count++;
