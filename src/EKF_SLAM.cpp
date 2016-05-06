@@ -108,7 +108,8 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 
 	//test_prediction
 	geometry_msgs::PoseStamped test_pose;
-	test_pose.header.stamp = ros::Time::now();
+	ros::Time new_now = ros::Time::now();
+	test_pose.header.stamp = ros::Time(new_now.sec, new_now.nsec);
 	test_pose.header.frame_id = "/map";
 	test_pose.pose.position.x = state_mean(0);
 	test_pose.pose.position.y = state_mean(1);
@@ -232,7 +233,8 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
 	//std::cout<<"end"<<std::endl;
 	geometry_msgs::PoseStamped test_pose;
-	test_pose.header.stamp = ros::Time::now();
+	ros::Time new_now = ros::Time::now();
+	test_pose.header.stamp = ros::Time(new_now.sec, new_now.nsec);
 	test_pose.header.frame_id = "/map";
 	test_pose.pose.position.x = state_mean(0);
 	test_pose.pose.position.y = state_mean(1);
