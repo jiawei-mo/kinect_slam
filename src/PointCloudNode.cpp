@@ -43,13 +43,11 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	}
 
 	// PROCESS IMAGE MESSAGES
-	std::cout << "extract image" << std::endl;
 	cv::Mat image_depth = cv_bridge::toCvCopy(dep)->image;
 	// set any nan values to zero
 	cv::patchNaNs(image_depth, 0.0);
 
 	// produce a point cloud
-	std::cout << "fill image" << std::endl;
 	PointCloudPtr pointcloud_msg (new PointCloud);
 	Point pt;
 	for (int y = 0; y < image_depth.rows; y+=4) {
@@ -68,14 +66,10 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 
 
 	// pass new point cloud on for further processing
-	std::cout << "append point cloud" << std::endl;
 	cloud_append(pointcloud_msg);
-	std::cout << "filter pc" << std::endl;
 	voxel_filter(0.1);
+	build_octomap();
 	if (num_frames % 10 == 0){
-		std::cout << "build map" << std::endl;
-		build_octomap();
-		std::cout << "publish pcl" << std::endl;
 		publish_pointcloud();
 	}
 }
