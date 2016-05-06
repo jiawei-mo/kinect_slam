@@ -127,6 +127,7 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 	state_mean(former_length+1) = state_mean(1) + (x+KINECT_DISP)*sin(state_mean(2)) + y*cos(state_mean(2));
 	state_mean(former_length+2) = sig;
 
+
 	state_cov.conservativeResize(former_length+3, former_length+3);
 	Eigen::MatrixXd H_Li, H_R;
 	H_R = Eigen::MatrixXd::Zero(3,3);
@@ -171,15 +172,15 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	int mm_count = measurements_idx.rows();
 	Eigen::MatrixXd H_accu(3*mm_count, state_mean.rows());
 	Eigen::MatrixXd R_accu(3*mm_count, 3*mm_count);
-	Eigen::VectorXd _measurement(3*mm_count);
+	Eigen::VectorXd _measurements(3*mm_count);
 	for(int mm_i=0; mm_i<mm_count; mm_i++)
 	{
 		int landmark_idx = measurements_idx(mm_i);
 		double q_x =  (state_mean(3+landmark_idx*3) - state_mean(0))*cos(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*sin(state_mean(2)) - KINECT_DISP;
 		double q_y = -(state_mean(3+landmark_idx*3) - state_mean(0))*sin(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*cos(state_mean(2));
-		_measurement(3*mm_i)=q_x;
-		_measurement(3*mm_i+1)=q_y;
-		_measurement(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
+		_measurements(3*mm_i)=q_x;
+		_measurements(3*mm_i+1)=q_y;
+		_measurements(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
 
 
 		Eigen::MatrixXd F;
@@ -211,9 +212,11 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	}
 	//std::cout<<"before inverse"<<std::endl;
 	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
+	S = (S.transpose() + S) / 2;
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
-	//std::cout<<"after inverse"<<std::endl;
-	state_mean += K*(measurements - _measurement);
+	// std::cout<<"received "<<measurements<<std::endl<<std::endl<<std::endl<<std::endl;
+	// std::cout<<"state "<<_measurements<<std::endl<<std::endl<<std::endl<<std::endl;
+	state_mean += K*(measurements - _measurements);
     //normalize the orientation range
     if(state_mean(2)>=2*PI)
 	{
@@ -326,7 +329,7 @@ void EKF_SLAM::landmark_pcl_pub()
 void EKF_SLAM::print_state()
 {
 	std::cout<<state_mean<<std::endl;
-	std::cout<<state_cov<<std::endl;
+	// std::cout<<state_cov<<std::endl;
 }
 
 void EKF_SLAM::landmark_count()

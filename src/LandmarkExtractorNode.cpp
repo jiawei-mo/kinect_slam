@@ -6,7 +6,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <math.h>
 #include <iostream>
-#define MIN_DEPTH_MM 10
+#define MIN_DEPTH 0.8
+#define MAX_DEPTH 3.5
 
 LandmarkExtractorNode::LandmarkExtractorNode(): 
   img_sub(nh, "/camera/rgb/image_rect_color", 1),
@@ -38,8 +39,9 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
       return;
   } 
 
-  cv::Mat clr_img, depth;
+  cv::Mat clr_img;
   img_ptr->image.copyTo(clr_img);
+  cv::Mat depth(clr_img.size(), CV_32F);
   dep_ptr->image.copyTo(depth);
   //ERROR: depth seems incorrect(to small: e^-30)
   // std::cout<<depth<<std::endl;
@@ -77,20 +79,20 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   
   for(int i=0; i<kp.size(); i++)
   {
-  	unsigned short zt = depth.at<unsigned short>(kp[i].pt.y, kp[i].pt.x);
-    if(zt<MIN_DEPTH_MM ) continue;
-    double z = static_cast<double>(zt);
-  	double x = z * (kp[i].pt.x - cx) / fx;
-  	double y = z * (kp[i].pt.y - cy) / fy;
-    new_measurement_msg.position_x.push_back(z);
-    new_measurement_msg.position_y.push_back(-x);
-    new_measurement_msg.position_signature.push_back(-y);
-    for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
-    new_measurement_msg.landmark_count++;
+  	double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
+    if(z>MIN_DEPTH && z<MAX_DEPTH)
+    {
+	    // std::cout<<"Depth: "<<z<<std::endl;
+	  	double x = z * (kp[i].pt.x - cx) / fx;
+	  	double y = z * (kp[i].pt.y - cy) / fy;
+	    new_measurement_msg.position_x.push_back(z);
+	    new_measurement_msg.position_y.push_back(-x);
+	    new_measurement_msg.position_signature.push_back(-y);
+	    for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
+	    new_measurement_msg.landmark_count++;
+	}
   }
  	landmark_pub.publish(new_measurement_msg);
-  // std::cout<<msg->points.size()<<std::endl;
-  // std::cout<<new_measurement_msg.descriptor_mat.size()<<std::endl;
 }
 
 void LandmarkExtractorNode::updateConfig(kinect_slam::LandmarkExtractorConfig &config, uint32_t level)

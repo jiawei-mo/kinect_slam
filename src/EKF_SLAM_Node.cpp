@@ -62,11 +62,11 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
   for(int j=0; j<landmark_count; j++)
   {
     // std::cout<<"x: "<<lmk->position_x[j]<<" y: "<<lmk->position_y[j]<<" z: "<<lmk->position_signature[j]<<std::endl;
-    measurements(0,j) = lmk->position_x[j] / 1000.0; /* x is distance from to object perpendicular to image plane parallel to ground */
+    measurements(0,j) = lmk->position_x[j]; /* x is distance from to object perpendicular to image plane parallel to ground */
     // std::cout<<"x: "<<lmk->position_x[j];
-    measurements(1,j) = lmk->position_y[j] / 1000.0; /* y distance from center along image plane parallel to ground */
+    measurements(1,j) = lmk->position_y[j]; /* y distance from center along image plane parallel to ground */
     // std::cout<<" y: "<<lmk->position_y[j];
-    measurements(2,j) = lmk->position_signature[j] / 1000.0; /* z height distance from image center to point perpendicular to ground */
+    measurements(2,j) = lmk->position_signature[j]; /* z height distance from image center to point perpendicular to ground */
     // std::cout<<" signature: "<<lmk->position_signature[j]<<std::endl;
     boost::dynamic_bitset<> cur(descriptor_len);
     for(int i=0; i<descriptor_len; i++)
@@ -74,6 +74,7 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
       cur[i] = lmk->descriptor_mat[d_c++]>0? true : false;
     }
     descriptors.push_back(cur);
+  // std::cout<<"x: "<<measurements(0,j)<<" y: "<<measurements(1,j)<<" z: "<<measurements(2,j)<<std::endl;
   }
 
   /* find matches */
@@ -82,7 +83,7 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
   //std::cout<<matches.size()<<std::endl;
   
   /* The flag determines which landmark matches are new. flag = true => correspondance; flag = false => new */
-  // std::cout<<"Total points: "<<landmark_count<<" Matched points: "<<matches.size()<<" New points: "<<new_points.size()<<std::endl;
+  std::cout<<"Total points: "<<landmark_count<<" Matched points: "<<matches.size()<<" New points: "<<new_points.size()<<std::endl;
   
   /* add matched elements to the H stack */
   Eigen::VectorXd matched_measurement(3*matches.size());
@@ -105,7 +106,7 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
       slam_ptr->add_landmark(measurements(0,new_points[i][0]), measurements(1,new_points[i][0]), measurements(2,new_points[i][0]), descriptors[new_points[i][0]]);
   }
   slam_ptr->landmark_pcl_pub();
-  // slam_ptr->print_state();
+  slam_ptr->print_state();
 }
 
 void EKF_SLAM_Node::updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t level)
