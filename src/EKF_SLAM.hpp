@@ -1,4 +1,6 @@
 #include "ros/ros.h"
+#include <vector>
+#include <fstream>
 #include <Eigen/LU>
 #include <Eigen/Core>
 #include <math.h>
@@ -6,8 +8,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h> 
-// #include "kinect_slam/Pose2DMsg.h"
+#include <pcl_conversions/pcl_conversions.h>
+#include <string>
 #define KINECT_DISP 0.07	//measured
 #define KINECT_X_VAR 0.7
 #define KINECT_Y_VAR 0.7
@@ -45,4 +47,5 @@ public:
 	void landmark_pcl_pub();
 	void print_state();
 	void landmark_count();
+	void write_to_csv(std::string filename, std::vector< std::vector<double> > dat);
 };

@@ -16,6 +16,8 @@ EKF_SLAM::EKF_SLAM()
 	 pcl_pub = nh.advertise<PointCloud> ("points2", 1);
 	 robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
 
+	 std::vector< std::vector<double> > state_data;
+
 }
 
 EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
@@ -117,6 +119,22 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	test_pose.pose.orientation.z = sin(state_mean(2)/2);
 	test_pose.pose.orientation.w = cos(state_mean(2)/2);
     robot_state_pub.publish(test_pose);
+
+    // write covariance and state estimate to file
+    /*
+	std::vector<double> one_state;
+	one_state.push_back(state_cov(0,0));
+	one_state.push_back(state_cov(1,1));
+	one_state.push_back(state_cov(2,2));
+	one_state.push_back(state_mean(0));
+	one_state.push_back(state_mean(1));
+	one_state.push_back(state_mean(2));
+	state_data.push_back(one_state);
+	if (state_data.size() % 10 == 0) {
+		write_to_csv("propagation.csv", state_data);
+	}
+	*/
+
 }
 
 void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitset<> dscrt)
@@ -127,7 +145,6 @@ void EKF_SLAM::add_landmark(double x, double y, double sig, boost::dynamic_bitse
 	state_mean(former_length) = state_mean(0) + (x+KINECT_DISP)*cos(state_mean(2)) - y*sin(state_mean(2));
 	state_mean(former_length+1) = state_mean(1) + (x+KINECT_DISP)*sin(state_mean(2)) + y*cos(state_mean(2));
 	state_mean(former_length+2) = sig;
-
 
 	state_cov.conservativeResize(former_length+3, former_length+3);
 	Eigen::MatrixXd H_Li, H_R;
@@ -173,15 +190,15 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	int mm_count = measurements_idx.rows();
 	Eigen::MatrixXd H_accu(3*mm_count, state_mean.rows());
 	Eigen::MatrixXd R_accu(3*mm_count, 3*mm_count);
-	Eigen::VectorXd _measurements(3*mm_count);
+	Eigen::VectorXd _measurement(3*mm_count);
 	for(int mm_i=0; mm_i<mm_count; mm_i++)
 	{
 		int landmark_idx = measurements_idx(mm_i);
 		double q_x =  (state_mean(3+landmark_idx*3) - state_mean(0))*cos(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*sin(state_mean(2)) - KINECT_DISP;
 		double q_y = -(state_mean(3+landmark_idx*3) - state_mean(0))*sin(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*cos(state_mean(2));
-		_measurements(3*mm_i)=q_x;
-		_measurements(3*mm_i+1)=q_y;
-		_measurements(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
+		_measurement(3*mm_i)=q_x;
+		_measurement(3*mm_i+1)=q_y;
+		_measurement(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
 
 
 		Eigen::MatrixXd F;
@@ -213,11 +230,9 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	}
 	//std::cout<<"before inverse"<<std::endl;
 	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
-	S = (S.transpose() + S) / 2;
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
-	// std::cout<<"received "<<measurements<<std::endl<<std::endl<<std::endl<<std::endl;
-	// std::cout<<"state "<<_measurements<<std::endl<<std::endl<<std::endl<<std::endl;
-	state_mean += K*(measurements - _measurements);
+	//std::cout<<"after inverse"<<std::endl;
+	state_mean += K*(measurements - _measurement);
     //normalize the orientation range
     if(state_mean(2)>=2*PI)
 	{
@@ -235,6 +250,7 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	state_cov = (state_cov + state_cov.transpose()) / 2;
 	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
 	//std::cout<<"end"<<std::endl;
+
 	geometry_msgs::PoseStamped test_pose;
 	ros::Time new_now = ros::Time::now();
 	test_pose.header.stamp = ros::Time(new_now.sec, new_now.nsec);
@@ -331,10 +347,24 @@ void EKF_SLAM::landmark_pcl_pub()
 void EKF_SLAM::print_state()
 {
 	std::cout<<state_mean<<std::endl;
-	// std::cout<<state_cov<<std::endl;
+	std::cout<<state_cov<<std::endl;
 }
 
 void EKF_SLAM::landmark_count()
 {
 	std::cout<<(state_mean.rows()-3)/3<<std::endl;
+}
+
+void EKF_SLAM::write_to_csv(std::string filename, std::vector< std::vector<double> > dat)
+{
+	std::cout << "writing to file" << std::endl;
+	std::ofstream myfile;
+	myfile.open(filename);
+	for(size_t  i = 0; i < dat.size(); ++i) {
+		for (size_t j = 0; j < 6; ++j) {
+			myfile << dat[i][j] << ',';
+		}
+		myfile << '\n';
+	}
+	myfile.close();
 }
