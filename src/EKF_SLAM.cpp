@@ -46,36 +46,17 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	Eigen::Matrix3d G;
 	Eigen::MatrixXd V(3,2);
 
-    //Prediction based on linear velocity and angular velocity
-	// if(angular_vel==0)
-	{
-		delta_x = linear_vel*cos(state_mean(2))*delta_t;
-		delta_y = linear_vel*sin(state_mean(2))*delta_t;
-		delta_theta = angular_vel*delta_t;
+	delta_x = linear_vel*cos(state_mean(2))*delta_t;
+	delta_y = linear_vel*sin(state_mean(2))*delta_t;
+	delta_theta = angular_vel*delta_t;
 
-	    G<< 1, 0, (-linear_vel*delta_t*sin(state_mean(2))),
-	        0, 1, (linear_vel*delta_t*cos(state_mean(2))),
-	        0, 0, 1;
+    G<< 1, 0, (-linear_vel*delta_t*sin(state_mean(2))),
+        0, 1, (linear_vel*delta_t*cos(state_mean(2))),
+        0, 0, 1;
 
-	    V<< -cos(state_mean(2))*delta_t, 0,
-	        -sin(state_mean(2))*delta_t, 0,
-	        0, -delta_t;
-    }
-  //   else
-  //   {
-  //   	double radius = linear_vel / angular_vel;
-		// delta_x = -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t);
-		// delta_y = radius*cos(state_mean(2)) - radius*cos(state_mean(2)+angular_vel*delta_t);
-		// delta_theta = angular_vel*delta_t;
-
-	 //    G<< 1, 0, -radius*cos(state_mean(2)) + radius*cos(state_mean(2)+angular_vel*delta_t),
-	 //        0, 1, -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t),
-	 //        0, 0, 1;
-
-	 //    V<< (-sin(state_mean(2))+sin(state_mean(2)+angular_vel*delta_t))/angular_vel, radius/angular_vel*sin(state_mean(2))-radius/angular_vel*sin(state_mean(2)+angular_vel*delta_t)+radius*cos(state_mean(2)+angular_vel*delta_t)*delta_t,
-	 //        (cos(state_mean(2))-cos(state_mean(2)+angular_vel*delta_t))/angular_vel, -radius/angular_vel*cos(state_mean(2))+radius/angular_vel*cos(state_mean(2)+angular_vel*delta_t)+radius*sin(state_mean(2)+angular_vel*delta_t)*delta_t,
-	 //        0, delta_t;
-  //   }
+    V<< -cos(state_mean(2))*delta_t, 0,
+        -sin(state_mean(2))*delta_t, 0,
+        0, -delta_t;
 
 	delta_state << delta_x,
 				   delta_y,
@@ -221,8 +202,12 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	}
 	//std::cout<<"before inverse"<<std::endl;
 	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
+	S = (S + S.transpose()) / 2;
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
-	//std::cout<<"after inverse"<<std::endl;
+	// std::cout<<"res: "<<std::endl<<measurements - _measurement<<std::endl<<"end of res"<<std::endl;
+	double S_cond = S.norm() * (S.inverse()).norm();
+	if (!(S_cond>0 && S_cond<1000)) return;
+	std::cout<<"S: "<<std::endl<<S_cond<<std::endl<<"end of S"<<std::endl;
 	state_mean += K*(measurements - _measurement);
     //normalize the orientation range
     if(state_mean(2)>=2*PI)
@@ -233,14 +218,8 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	{
 		state_mean(2)=2*PI+state_mean(2);
 	}
-	else
-	{
-    }
-	//std::cout<<"mean update"<<std::endl;
 	state_cov = state_cov - K*S*K.transpose();
 	state_cov = (state_cov + state_cov.transpose()) / 2;
-	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
-	//std::cout<<"end"<<std::endl;
 
 	geometry_msgs::PoseStamped test_pose;
 	ros::Time new_now = ros::Time::now();

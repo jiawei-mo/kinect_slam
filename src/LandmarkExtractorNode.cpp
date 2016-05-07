@@ -6,8 +6,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <math.h>
 #include <iostream>
-#define MIN_DEPTH 0
-#define MAX_DEPTH 400
+#define MIN_DEPTH 0.8
+#define MAX_DEPTH 3.5
 
 LandmarkExtractorNode::LandmarkExtractorNode(): 
   img_sub(nh, "/camera/rgb/image_rect_color", 1),
@@ -80,6 +80,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   for(int i=0; i<kp.size(); i++)
   {
   	double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
+    std::cout<<"z: "<<z<<std::endl;
     if(z>MIN_DEPTH && z<MAX_DEPTH)
     {
 	    // std::cout<<"Depth: "<<z<<std::endl;
