@@ -45,7 +45,6 @@ typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamp
 class PointCloudNode
 {
 private:
-	int cloud_sz;
 	int num_frames;
 	PointCloudPtr cloud;
 	Eigen::Vector3d state_mean;

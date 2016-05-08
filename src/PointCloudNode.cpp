@@ -6,8 +6,6 @@ PointCloudNode::PointCloudNode():
 	dep_sub(nh, "/camera/depth/image_rect", 1),
 	pioneer_sync(PioneerPolicy(10), pioneer_sub, dep_sub)
 {
-	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2));
-	pcl_pub = nh.advertise<PointCloud>("pcl_map", 1);
 	// state mean
 	state_mean = Eigen::Vector3d::Zero();
 	init_pose = Eigen::Vector3d::Zero();
@@ -15,6 +13,9 @@ PointCloudNode::PointCloudNode():
 	num_frames = 0;
 	// initialize point cloud
 	cloud = PointCloudPtr(new PointCloud());
+	// sync and call callback
+	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2));
+	pcl_pub = nh.advertise<PointCloud>("pcl_map", 1);
 }
 
 
@@ -27,12 +28,11 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	// convert from quaternions to radians
 	double temp_theta_z = state_msg->pose.orientation.z;
 	double temp_theta_w = state_msg->pose.orientation.w;
-	double current_theta = 2.0 * atan2(temp_theta_z, temp_theta_w);
-	float th = (float)current_theta;
+	double th = 2.0 * atan2(temp_theta_z, temp_theta_w);
 	std::cout << "Raw state. " << ". X: " << x << ", Y: " << y << " Th: " << th << std::endl;
 
-	state_mean << x,
-				  y,
+	state_mean << (double)x,
+				  (double)y,
 				  th;
 	if (init_pose.isZero(0) && init_pose.isZero(1) && init_pose.isZero(2)) {
 		std::cout << "Setting init pose:" << endl;
