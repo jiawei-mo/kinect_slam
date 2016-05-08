@@ -204,22 +204,23 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
 	S = (S + S.transpose()) / 2;
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
-	std::cout<<"res: "<<std::endl<< measurements - _measurements<<std::endl;
+	std::cout<<"state: "<<std::endl<<_measurements<<std::endl;
+	std::cout<<"meas: "<<std::endl<<measurements<<std::endl;
 	double S_cond = S.norm() * (S.inverse()).norm();
 	if (!(S_cond>0 && S_cond<80)) return;
 	// std::cout<<"S: "<<std::endl<<S_cond<<std::endl<<"end of S"<<std::endl;
-	// state_mean += K*(measurements - _measurements);
- //    //normalize the orientation range
- //    if(state_mean(2)>=2*PI)
-	// {
-	// 	state_mean(2)=state_mean(2)-2*PI;
-	// }
-	// else if(state_mean(2)<0)
-	// {
-	// 	state_mean(2)=2*PI+state_mean(2);
-	// }
-	// state_cov = state_cov - K*S*K.transpose();
-	// state_cov = (state_cov + state_cov.transpose()) / 2;
+	state_mean += K*(measurements - _measurements);
+    //normalize the orientation range
+    if(state_mean(2)>=2*PI)
+	{
+		state_mean(2)=state_mean(2)-2*PI;
+	}
+	else if(state_mean(2)<0)
+	{
+		state_mean(2)=2*PI+state_mean(2);
+	}
+	state_cov = state_cov - K*S*K.transpose();
+	state_cov = (state_cov + state_cov.transpose()) / 2;
 
 	geometry_msgs::PoseStamped test_pose;
 	ros::Time new_now = ros::Time::now();
