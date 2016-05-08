@@ -2,21 +2,30 @@
 
 
 PointCloudNode::PointCloudNode():
-	pioneer_sub(nh, "/pose", 1),
+	pioneer_sub(nh, "/pose1", 1),
 	dep_sub(nh, "/camera/depth/image_rect", 1),
 	pioneer_sync(PioneerPolicy(10), pioneer_sub, dep_sub)
 {
-	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2));
-	pcl_pub = nh.advertise<PointCloud>("pcl_map", 1);
 	// state mean
 	state_mean = Eigen::Vector3d::Zero();
 	init_pose = Eigen::Vector3d::Zero();
-	// point cloud size
-	cloud_sz = 0;
 	// number of images received from kinect
 	num_frames = 0;
 	// initialize point cloud
 	cloud = PointCloudPtr(new PointCloud());
+	// sync and call callback
+	pioneer_sub.registerCallback(&PointCloudNode::pose_callback, this);
+	dep_sub.registerCallback(&PointCloudNode::image_callback, this);
+	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2));
+	pcl_pub = nh.advertise<PointCloud>("pcl_map", 1);
+}
+
+void PointCloudNode::pose_callback(const geometry_msgs::PoseStampedConstPtr& msg){
+	std::cout << "pose: " << msg->header.stamp << endl;
+}
+
+void PointCloudNode::image_callback(const sensor_msgs::ImageConstPtr& msg){
+	std::cout << "image: " << msg->header.stamp << endl;
 }
 
 
@@ -29,12 +38,11 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	// convert from quaternions to radians
 	double temp_theta_z = state_msg->pose.orientation.z;
 	double temp_theta_w = state_msg->pose.orientation.w;
-	double current_theta = 2.0 * atan2(temp_theta_z, temp_theta_w);
-	float th = (float)current_theta;
+	double th = 2.0 * atan2(temp_theta_z, temp_theta_w);
 	std::cout << "Raw state. " << ". X: " << x << ", Y: " << y << " Th: " << th << std::endl;
 
-	state_mean << x,
-				  y,
+	state_mean << (double)x,
+				  (double)y,
 				  th;
 	if (init_pose.isZero(0) && init_pose.isZero(1) && init_pose.isZero(2)) {
 		std::cout << "Setting init pose:" << endl;
@@ -42,10 +50,14 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 		std::cout << init_pose << endl;
 	}
 
+	
 	// PROCESS IMAGE MESSAGES
 	cv::Mat image_depth = cv_bridge::toCvCopy(dep)->image;
 	// set any nan values to zero
 	cv::patchNaNs(image_depth, 0.0);
+	if (cv::sum(image_depth)[0] <= 0.0) {
+		return;
+	}
 
 	// produce a point cloud
 	PointCloudPtr pointcloud_msg (new PointCloud);
@@ -63,22 +75,26 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	}
 	pointcloud_msg->height = 1;
 	pointcloud_msg->width = pointcloud_msg->points.size();
+	std::cout << "size of new cloud " << pointcloud_msg->points.size() << endl;
 
 
 	// pass new point cloud on for further processing
-	cloud_append(pointcloud_msg);
-	voxel_filter(0.1);
-
-	if (num_frames % 25 == 0){
-		build_octomap();
-		//publish_pointcloud();
+	if (pointcloud_msg->points.size() > 0) {
+		//cloud_append(pointcloud_msg);
+		//PointCloudPtr tmp0 = remove_floor(cloud);
+		//cloud = tmp0;
+		//voxel_filter(0.1);
+		if (num_frames % 25 == 0){
+			//build_octomap();
+			//publish_pointcloud();
+		}
 	}
+	
 }
 
 
 
-PointCloudPtr PointCloudNode::transform_cloud(PointCloudPtr in_cloud,
-	float dx=0.0, float dy=0.0, float dz=0.0, float theta=0.0, const std::string axis="z")
+PointCloudPtr PointCloudNode::transform_cloud(PointCloudPtr in_cloud, float dx=0.0, float dy=0.0, float dz=0.0, float theta=0.0, const std::string axis="z")
 {
 	// create transformation matrix
 	Eigen::Affine3f T = Eigen::Affine3f::Identity();
@@ -128,22 +144,24 @@ PointCloudPtr PointCloudNode::to_global(PointCloudPtr in_cloud)
 void PointCloudNode::cloud_append(PointCloudPtr new_cloud)
 {
 	// remove some of the new points that are very far away, or super close
-	PointCloudPtr filt1 = pt_filter(new_cloud, "z", 0.2, 10.0);
-	//PointCloudPtr filt2 = pt_filter(filt1, "x", 1.0, 4.0);
+	PointCloudPtr no_z_outlier (new PointCloud());
+	no_z_outlier = pt_filter(new_cloud, "z", 0.2, 10.0);
 
 	// remove floor points
-	PointCloudPtr tmp0 = remove_floor(filt1);
+	PointCloudPtr only_walls (new PointCloud());
+	only_walls = remove_floor(no_z_outlier);
 
 	// Create the filtering object
 	PointCloudPtr cloud_filtered (new PointCloud());
 	pcl::StatisticalOutlierRemoval<Point> sor;
-	sor.setInputCloud(tmp0);
+	sor.setInputCloud(only_walls);
 	sor.setMeanK (50);
 	sor.setStddevMulThresh (1.0);
 	sor.filter (*cloud_filtered);
 
 	// put in global frame
-	PointCloudPtr cloud_global = to_global(cloud_filtered);
+	PointCloudPtr cloud_global (new PointCloud());
+	cloud_global = to_global(cloud_filtered);
 
 	// once in global each new point add to cloud
 	size_t num_points = cloud_global->points.size();
@@ -154,7 +172,6 @@ void PointCloudNode::cloud_append(PointCloudPtr new_cloud)
 		pt.z = cloud_global->points[i].z;
 		//pt.rgb = cloud_global->points[i].rgb;
 		cloud->points.push_back(pt);
-		cloud_sz++;
 	}
 	num_frames++;
 
@@ -312,14 +329,14 @@ PointCloudPtr PointCloudNode::simulate_square(int num_points, float num_loops) {
 
 
 
-void PointCloudNode::print_cloud(PointCloudPtr cloud)
+void PointCloudNode::print_cloud(PointCloudPtr in_cloud)
 {
-	size_t cloud_sz = cloud->points.size();
+	cloud_sz = in_cloud->points.size();
 	for (size_t i = 0; i < cloud_sz; ++i) {
 			std::cout << "    " <<
-			cloud->points[i].x << " " <<
-			cloud->points[i].y << " " <<
-			cloud->points[i].z << std::endl;
+			in_cloud->points[i].x << " " <<
+			in_cloud->points[i].y << " " <<
+			in_cloud->points[i].z << std::endl;
 	}
 }
 
@@ -340,8 +357,6 @@ void PointCloudNode::visualize_cloud(PointCloudPtr in_cloud)
 void PointCloudNode::publish_pointcloud()
 {
 	cloud->header.frame_id = "/map";
-	cloud->is_dense = false;
 	pcl_conversions::toPCL(ros::Time::now(), cloud->header.stamp);
 	pcl_pub.publish(cloud);
 }
-

@@ -45,11 +45,11 @@ typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamp
 class PointCloudNode
 {
 private:
-	int cloud_sz;
 	int num_frames;
 	PointCloudPtr cloud;
 	Eigen::Vector3d state_mean;
 	Eigen::Vector3d init_pose;
+    size_t cloud_sz;
 
 	ros::NodeHandle nh;
 	ros::Publisher pcl_pub;
@@ -65,6 +65,8 @@ public:
 	~PointCloudNode(){};
 
 	// real world call back, no color PoseStampedConstPtr
+	void pose_callback(const geometry_msgs::PoseStampedConstPtr& msg);
+	void image_callback(const sensor_msgs::ImageConstPtr& msg);
 	void pioneer_callback(const geometry_msgs::PoseStampedConstPtr& state_msg, const sensor_msgs::ImageConstPtr&  dep);
 	void publish_pointcloud();
 	void cloud_append(PointCloudPtr new_cloud);

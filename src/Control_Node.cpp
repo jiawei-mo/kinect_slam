@@ -68,11 +68,11 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   }
   //follow wall
   current_time = ros::Time::now();
- if ((msg.points[0].y<=0.7 || msg.points[6].y>-1.1) && !action_lock && ((current_time.sec-follow_wall_time.sec>20 && current_time.sec-turn_time.sec>20 )|| first_turn))//&& turn_count>0 && current_time-turn_time>30)
+ if ((msg.points[0].y<=0.7 || msg.points[6].y>-0.9) && !action_lock && ((current_time.sec-follow_wall_time.sec>20 && current_time.sec-turn_time.sec>20 )|| first_turn))//&& turn_count>0 && current_time-turn_time>30)
  {
    follow_wall_time = ros::Time::now();
    action_lock = 1;
-   if ((msg.points[0].y<=0.7) && (msg.points[6].y>-1.1))
+   if ((msg.points[0].y<=0.7) && (msg.points[6].y>-0.9))
    {
 
    }

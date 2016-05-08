@@ -7,7 +7,7 @@ bool Control::pose_correction(double theta, int turn_flag)
   // robot = new ArRobot();
   lock=0;
   //double time_threshold = 80;
-  double BASE_SPEED = 0.2, MOVE_TIME = 2, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.3, MOVE_TIME = 2, CLOCK_SPEED = 1;
   if (turn_flag>0)
   {
     BASE_SPEED = 0.05;
@@ -15,7 +15,7 @@ bool Control::pose_correction(double theta, int turn_flag)
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   rate.reset();
-  double threshold=PI/30;
+  double threshold=PI/20;
   geometry_msgs::Twist correct;
   geometry_msgs::TwistStamped correct_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
@@ -23,6 +23,7 @@ bool Control::pose_correction(double theta, int turn_flag)
   // ros::Publisher test_theta = n.advertise<geometry_msgs::Pose2D>("/test_theta",1);
   // geometry_msgs::Pose2D temp_theta;
   // temp_theta.theta=theta;
+  correct.angular.z=0;
   if (abs(0-theta)<threshold && !lock)
   {
       correct.angular.z=(0-theta);///int(MOVE_TIME/CLOCK_SPEED);
@@ -95,7 +96,7 @@ bool Control::follow_wall(int flag, int step_flag, double distance)
   // 	}
   // }
   ///////PID control/////
-  double K_p = 1.2;
+  double K_p = 2;
   double K_i = 0.1;
   double K_d = 0.5;
   double PID_factor;
@@ -148,31 +149,7 @@ bool Control::follow_wall(int flag, int step_flag, double distance)
       ros::spinOnce();
       rate.sleep();
    }
-   // count=0;
-   // while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
-   // {
-   //  if (count == 0 || count == 1)
-   //   {
-   //    follow_wall_second.linear.x = BASE_SPEED;
-   //    follow_wall_rect.linear.x = BASE_SPEED; //publish the new velocity to rosaria
-   //    pub.publish(follow_wall_second);
-   //    if (follow_wall_second.angular.z<0)
-   //    {
-   //      follow_wall_pub.twist=follow_wall_second;
-   //    }
-   //    else
-   //    {
-   //      follow_wall_pub.twist=follow_wall_rect;
-   //    }
-   //    follow_wall_pub.twist.angular.z=follow_wall_pub.twist.angular.z/3;
-   //   }
-   //    count++;
-   //    ROS_INFO_STREAM("The robot is now avoiding wall!");
-   //    follow_wall_pub.header.stamp.sec=ros::Time::now().toSec();
-   //    velocity.publish(follow_wall_pub);
-   //    ros::spinOnce();
-   //    rate.sleep();
-   // }
+
    ROS_INFO_STREAM("The robot finished avoiding wall!");
    return 0;
 }

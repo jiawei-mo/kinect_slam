@@ -4,11 +4,11 @@ EKF_SLAM_Node::EKF_SLAM_Node()
 {
   ini_flag=1;
  // get_ini_time = nh.subscribe("/ini_time",1, &EKF_SLAM_Node::Initialize_Time_Recieved,this);
-  repub_sub = nh.subscribe("/pose", 1, &EKF_SLAM_Node::Ctrl_republish,this);
+  repub_sub = nh.subscribe("/control", 1, &EKF_SLAM_Node::Ctrl_republish,this);
   vel_sub = nh.subscribe("/control_repub", 1, &EKF_SLAM_Node::CtrlCallback,this);
   lmk_sub = nh.subscribe("/landmarkWithDscrt", 1, &EKF_SLAM_Node::LmkCallback,this);
   slam_ptr = boost::shared_ptr<EKF_SLAM>(new EKF_SLAM());
-	f = boost::bind(&EKF_SLAM_Node::updateConfig, this, _1, _2);
+  f = boost::bind(&EKF_SLAM_Node::updateConfig, this, _1, _2);
   server.setCallback(f);
 }
 
@@ -26,23 +26,24 @@ void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
   double delta_t = (current_time_stamp.sec - pre_time_stamp.sec);
   // if (current_time_stamp>0)
   // {
-     // ROS_INFO_STREAM("Control data receieved");
-     // std::cout<<"Delta_T is  "<<delta_t<<"s\n";
-  // }
+     ROS_INFO_STREAM("Control data receieved");
+     std::cout<<"Delta_T is  "<<delta_t<<"s\n";
+  //}
   slam_ptr->predict(l_vel, r_vel, delta_t);
   pre_time_stamp = current_time_stamp;
 }
 
-void EKF_SLAM_Node::Ctrl_republish(const nav_msgs::OdometryConstPtr& ctrl)
+void EKF_SLAM_Node::Ctrl_republish(const geometry_msgs::TwistStamped& ctrl)
 {
   ros::Publisher repub=nh.advertise<geometry_msgs::TwistStamped>("/control_repub",1);
   geometry_msgs::TwistStamped msg_pub;
   double CLOCK_SPEED = 20;
   ros::Rate rate(CLOCK_SPEED);
-  msg_pub.twist=ctrl->twist.twist;
+  msg_pub.twist=ctrl.twist;
   while(ros::ok())
   {
-    msg_pub.header.stamp=ros::Time::now();
+    msg_pub.header.stamp.sec=ros::Time::now().sec;
+    msg_pub.header.stamp.nsec=ros::Time::now().nsec;
     repub.publish(msg_pub);
     ros::spinOnce();
     rate.sleep();
