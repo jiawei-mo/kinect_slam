@@ -21,7 +21,7 @@ Control_Node::Control_Node()
   follow_wall_time = ros::Time::now();
   action_lock=0;
   sonar = nh.subscribe("RosAria/sonar",1, &Control_Node::sonarMeassageReceived,this);
-  pose_correct=nh.subscribe("/pose",1, &Control_Node::poseMeassageReceived,this);
+  pose_correct=nh.subscribe("/pose1",1, &Control_Node::poseMeassageReceived,this);
   pose_corrected = 0;
   current_theta = 0;
   turn_flag=0;

@@ -14,7 +14,7 @@ EKF_SLAM::EKF_SLAM()
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
 	 pcl_pub = nh.advertise<PointCloud> ("points2", 1);
-	 robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
+	 robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose1", 50);
 }
 
 EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
@@ -30,7 +30,7 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
 	pcl_pub = nh.advertise<PointCloud> ("points2", 1);
-	robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
+	robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose1", 50);
 
 }
 
