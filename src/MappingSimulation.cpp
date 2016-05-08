@@ -28,19 +28,10 @@ void MappingSimulation::simulation_callback(const nav_msgs::Odometry::ConstPtr& 
 	float x = state_msg->pose.pose.position.x;
 	float y = state_msg->pose.pose.position.y;
 
-	// extract orientation / yaw from pose data
-	/*
-	// this is still probably wrong
-	tf::Pose pose;
-	tf::poseMsgToTF(state_msg->pose.pose, pose);
-	double th = tf::getYaw(pose.getRotation());
-	float th = (float)current_theta;
-	*/
-
+	// extract orientation
 	float temp_theta_z = state_msg->pose.pose.orientation.z;
 	float temp_theta_w = state_msg->pose.pose.orientation.w;
 	float th = 2.0 * atan2(temp_theta_z, temp_theta_w);
-
 
 	// save estimates in class variables
 	state_mean << x,

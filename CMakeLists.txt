@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   pcl_ros
   pcl_conversions
+  octomap
   cv_bridge
   dynamic_reconfigure
   image_transport
