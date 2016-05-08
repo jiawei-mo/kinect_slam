@@ -204,8 +204,7 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
 	S = (S + S.transpose()) / 2;
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
-	std::cout<<"state: "<<std::endl<<_measurements<<std::endl;
-	std::cout<<"meas: "<<std::endl<<measurements<<std::endl;
+	std::cout<<"res: "<<std::endl<<measurements - _measurements<<std::endl;
 	double S_cond = S.norm() * (S.inverse()).norm();
 	if (!(S_cond>0 && S_cond<80)) return;
 	// std::cout<<"S: "<<std::endl<<S_cond<<std::endl<<"end of S"<<std::endl;
