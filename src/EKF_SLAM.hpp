@@ -1,4 +1,5 @@
 #include "ros/ros.h"
+#include "parameter.hpp"
 #include <vector>
 #include <fstream>
 #include <Eigen/LU>
@@ -10,14 +11,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <string>
-#define KINECT_DISP 0.07	//measured
-#define KINECT_X_VAR 10
-#define KINECT_Y_VAR 10
-#define KINECT_S_VAR 10
-#define MOTION_FACTOR 1
-#define TURN_FACTOR 1
 #define PI 3.1415926
-
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 class EKF_SLAM
