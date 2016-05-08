@@ -23,7 +23,6 @@ void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
   double l_vel = ctrl.twist.linear.x;
   double r_vel = ctrl.twist.angular.z;
   ros::Time current_time_stamp = ctrl.header.stamp;
-  // double delta_t = (current_time_stamp.sec - pre_time_stamp.sec)+(current_time_stamp.nsec - pre_time_stamp.nsec)*1e-9;
   double delta_t = (current_time_stamp.sec - pre_time_stamp.sec);
   // if (current_time_stamp>0)
   // {
