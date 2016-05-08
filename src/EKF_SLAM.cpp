@@ -162,15 +162,15 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	int mm_count = measurements_idx.rows();
 	Eigen::MatrixXd H_accu(3*mm_count, state_mean.rows());
 	Eigen::MatrixXd R_accu(3*mm_count, 3*mm_count);
-	Eigen::VectorXd _measurement(3*mm_count);
+	Eigen::VectorXd _measurements(3*mm_count);
 	for(int mm_i=0; mm_i<mm_count; mm_i++)
 	{
 		int landmark_idx = measurements_idx(mm_i);
 		double q_x =  (state_mean(3+landmark_idx*3) - state_mean(0))*cos(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*sin(state_mean(2)) - KINECT_DISP;
 		double q_y = -(state_mean(3+landmark_idx*3) - state_mean(0))*sin(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*cos(state_mean(2));
-		_measurement(3*mm_i)=q_x;
-		_measurement(3*mm_i+1)=q_y;
-		_measurement(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
+		_measurements(3*mm_i)=q_x;
+		_measurements(3*mm_i+1)=q_y;
+		_measurements(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
 
 
 		Eigen::MatrixXd F;
@@ -204,22 +204,22 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
 	S = (S + S.transpose()) / 2;
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
-	// std::cout<<"res: "<<std::endl<<measurements - _measurement<<std::endl<<"end of res"<<std::endl;
+	std::cout<<"res: "<<std::endl<< measurements - _measurements<<std::endl;
 	double S_cond = S.norm() * (S.inverse()).norm();
-	if (!(S_cond>0 && S_cond<1000)) return;
-	std::cout<<"S: "<<std::endl<<S_cond<<std::endl<<"end of S"<<std::endl;
-	state_mean += K*(measurements - _measurement);
-    //normalize the orientation range
-    if(state_mean(2)>=2*PI)
-	{
-		state_mean(2)=state_mean(2)-2*PI;
-	}
-	else if(state_mean(2)<0)
-	{
-		state_mean(2)=2*PI+state_mean(2);
-	}
-	state_cov = state_cov - K*S*K.transpose();
-	state_cov = (state_cov + state_cov.transpose()) / 2;
+	if (!(S_cond>0 && S_cond<80)) return;
+	// std::cout<<"S: "<<std::endl<<S_cond<<std::endl<<"end of S"<<std::endl;
+	// state_mean += K*(measurements - _measurements);
+ //    //normalize the orientation range
+ //    if(state_mean(2)>=2*PI)
+	// {
+	// 	state_mean(2)=state_mean(2)-2*PI;
+	// }
+	// else if(state_mean(2)<0)
+	// {
+	// 	state_mean(2)=2*PI+state_mean(2);
+	// }
+	// state_cov = state_cov - K*S*K.transpose();
+	// state_cov = (state_cov + state_cov.transpose()) / 2;
 
 	geometry_msgs::PoseStamped test_pose;
 	ros::Time new_now = ros::Time::now();
@@ -267,7 +267,7 @@ void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynami
       std::array<size_t, 3> match_i = {i, idx, dist};
       matches.push_back(match_i);
     }
-    else if(dist > new_points_threshold && idx>0)
+    else if(dist > new_points_threshold)
     {
       std::array<size_t, 3> np_i = {i, idx, dist};
       new_points.push_back(np_i);

@@ -6,8 +6,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <math.h>
 #include <iostream>
-#define MIN_DEPTH 0.8
-#define MAX_DEPTH 3.5
 
 LandmarkExtractorNode::LandmarkExtractorNode(): 
   img_sub(nh, "/camera/rgb/image_rect_color", 1),
@@ -39,9 +37,8 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
       return;
   } 
 
-  cv::Mat clr_img;
+  cv::Mat clr_img, depth;
   img_ptr->image.copyTo(clr_img);
-  cv::Mat depth(clr_img.size(), CV_32F);
   dep_ptr->image.copyTo(depth);
   //ERROR: depth seems incorrect(to small: e^-30)
   // std::cout<<depth<<std::endl;
@@ -51,15 +48,6 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   std::vector<cv::KeyPoint> kp;
   fd_ptr->detect(gry_img, kp);
   if(kp.size()==0) return; 
-  
-  for(int j=0;j<kp.size();j++)
-  {
-    circle(clr_img, kp[j].pt, 5, CV_RGB(255,0,0));
-  }
-
-  cv::namedWindow("Feature Points");
-  cv::imshow("Feature Points", clr_img);
-  cv::waitKey(3);
 
   std::vector< boost::dynamic_bitset<> > dscrt;
   de_ptr->extract(gry_img, kp, dscrt);
@@ -80,7 +68,6 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   for(int i=0; i<kp.size(); i++)
   {
   	double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
-    std::cout<<"z: "<<z<<std::endl;
     if(z>MIN_DEPTH && z<MAX_DEPTH)
     {
 	    // std::cout<<"Depth: "<<z<<std::endl;
@@ -91,8 +78,13 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
 	    new_measurement_msg.position_signature.push_back(-y);
 	    for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
 	    new_measurement_msg.landmark_count++;
-	}
+      circle(clr_img, kp[i].pt, 5, CV_RGB(255,0,0));
+  	}
   }
+
+  cv::namedWindow("Feature Points");
+  cv::imshow("Feature Points", clr_img);
+  cv::waitKey(3);
  	landmark_pub.publish(new_measurement_msg);
 }
 
@@ -110,6 +102,9 @@ void LandmarkExtractorNode::updateConfig(kinect_slam::LandmarkExtractorConfig &c
     int dps = config.descriptor_patch_size;
     int dbs = config.descriptor_brief_size;
     int dss = config.descriptor_smooth_size;
+
+    MIN_DEPTH = config.kinect_min_depth;
+    MAX_DEPTH = config.kinect_max_depth;
 
     fd_ptr = boost::shared_ptr<HarrisDetector>(new HarrisDetector(hws, hrt, hnp, har, hff, haf, hbs, hbv));
     de_ptr = boost::shared_ptr<BRIEF>(new BRIEF(dps, dss, dbs));
