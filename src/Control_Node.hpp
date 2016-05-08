@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include "parameter.hpp"
 #include <iostream>
 #include <stdlib.h>
 #include <string>
@@ -9,10 +10,6 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include "Control.hpp"
-#define OBSTACLE_FRONT 0 //2
-#define OBSTACLE_SIDES 3
-#define LEFT_AVAILABLE 5 //3
-#define LEFT_AVAILABLE_SIDES 3
 
 class Control_Node
 {

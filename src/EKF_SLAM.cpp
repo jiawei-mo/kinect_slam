@@ -14,7 +14,7 @@ EKF_SLAM::EKF_SLAM()
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
 	 pcl_pub = nh.advertise<PointCloud> ("points2", 1);
-	 robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
+	 robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose1", 50);
 }
 
 EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
@@ -30,7 +30,7 @@ EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
 	 0, 0, KINECT_S_VAR*KINECT_S_VAR;
 
 	pcl_pub = nh.advertise<PointCloud> ("points2", 1);
-	robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
+	robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose1", 50);
 
 }
 
@@ -204,22 +204,23 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
 	S = (S + S.transpose()) / 2;
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
-	std::cout<<"res: "<<std::endl<< measurements - _measurements<<std::endl;
+	std::cout<<"state: "<<std::endl<<_measurements<<std::endl;
+	std::cout<<"meas: "<<std::endl<<measurements<<std::endl;
 	double S_cond = S.norm() * (S.inverse()).norm();
 	if (!(S_cond>0 && S_cond<80)) return;
 	// std::cout<<"S: "<<std::endl<<S_cond<<std::endl<<"end of S"<<std::endl;
-	// state_mean += K*(measurements - _measurements);
- //    //normalize the orientation range
- //    if(state_mean(2)>=2*PI)
-	// {
-	// 	state_mean(2)=state_mean(2)-2*PI;
-	// }
-	// else if(state_mean(2)<0)
-	// {
-	// 	state_mean(2)=2*PI+state_mean(2);
-	// }
-	// state_cov = state_cov - K*S*K.transpose();
-	// state_cov = (state_cov + state_cov.transpose()) / 2;
+	state_mean += K*(measurements - _measurements);
+    //normalize the orientation range
+    if(state_mean(2)>=2*PI)
+	{
+		state_mean(2)=state_mean(2)-2*PI;
+	}
+	else if(state_mean(2)<0)
+	{
+		state_mean(2)=2*PI+state_mean(2);
+	}
+	state_cov = state_cov - K*S*K.transpose();
+	state_cov = (state_cov + state_cov.transpose()) / 2;
 
 	geometry_msgs::PoseStamped test_pose;
 	ros::Time new_now = ros::Time::now();
@@ -286,20 +287,21 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
 	}
 	std::vector< boost::dynamic_bitset<> > destDescriptors = descriptorDB;
 
-  // std::vector<std::array<size_t, 3>> l_matches;
-  // std::vector<std::array<size_t, 3>> r_matches;
+  std::vector<std::array<size_t, 3>> l_matches;
+  std::vector<std::array<size_t, 3>> r_matches;
+  std::vector<std::array<size_t, 3>> t_new;
 
-  match(srcKeyPoints, srcDescriptors, destKeyPoints, destDescriptors, matches, new_points, max_signature_threshold, match_threshold, new_points_threshold);
-  // match(destKeyPoints, destDescriptors, srcKeyPoints, srcDescriptors, r_matches, max_signature_threshold, match_threshold);
+  match(srcKeyPoints, srcDescriptors, destKeyPoints, destDescriptors, l_matches, new_points, max_signature_threshold, match_threshold, new_points_threshold);
+  match(destKeyPoints, destDescriptors, srcKeyPoints, srcDescriptors, r_matches, t_new, max_signature_threshold, match_threshold, new_points_threshold);
 
-  // for(int i=0; i<l_matches.size(); i++)
-  // {
-  //   for(int j=0; j<r_matches.size(); j++)
-  //   {
-  //     if(l_matches[i][0] == r_matches[j][1] && l_matches[i][1] == r_matches[j][0])
-  //       matches.push_back(l_matches[i]);
-  //   }
-  // }
+  for(int i=0; i<l_matches.size(); i++)
+  {
+    for(int j=0; j<r_matches.size(); j++)
+    {
+      if(l_matches[i][0] == r_matches[j][1] && l_matches[i][1] == r_matches[j][0])
+        matches.push_back(l_matches[i]);
+    }
+  }
 }
 
 void EKF_SLAM::landmark_pcl_pub()

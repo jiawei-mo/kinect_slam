@@ -30,7 +30,7 @@ public:
 	EKF_SLAM_Node();
 	~EKF_SLAM_Node(){};
 	void updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t level);
-	void Ctrl_republish(const geometry_msgs::TwistStamped &ctrl);
+	void Ctrl_republish(const nav_msgs::OdometryConstPtr& ctrl);
 	void CtrlCallback(const geometry_msgs::TwistStamped &ctrl);
 	void LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk);
 };
