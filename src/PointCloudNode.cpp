@@ -40,7 +40,7 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 		std::cout << init_pose << endl;
 	}
 
-	/*
+	
 	// PROCESS IMAGE MESSAGES
 	cv::Mat image_depth = cv_bridge::toCvCopy(dep)->image;
 	// set any nan values to zero
@@ -77,7 +77,7 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 			//publish_pointcloud();
 		}
 	}
-	*/
+	
 }
 
 
@@ -320,7 +320,7 @@ PointCloudPtr PointCloudNode::simulate_square(int num_points, float num_loops) {
 
 void PointCloudNode::print_cloud(PointCloudPtr in_cloud)
 {
-	size_t cloud_sz = in_cloud->points.size();
+	cloud_sz = in_cloud->points.size();
 	for (size_t i = 0; i < cloud_sz; ++i) {
 			std::cout << "    " <<
 			in_cloud->points[i].x << " " <<

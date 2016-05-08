@@ -15,7 +15,7 @@ bool Control::pose_correction(double theta, int turn_flag)
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   rate.reset();
-  double threshold=PI/30;
+  double threshold=PI/20;
   geometry_msgs::Twist correct;
   geometry_msgs::TwistStamped correct_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
@@ -23,6 +23,7 @@ bool Control::pose_correction(double theta, int turn_flag)
   // ros::Publisher test_theta = n.advertise<geometry_msgs::Pose2D>("/test_theta",1);
   // geometry_msgs::Pose2D temp_theta;
   // temp_theta.theta=theta;
+  correct.angular.z=0;
   if (abs(0-theta)<threshold && !lock)
   {
       correct.angular.z=(0-theta);///int(MOVE_TIME/CLOCK_SPEED);
@@ -153,17 +154,13 @@ bool Control::follow_wall(int flag, int step_flag, double distance)
    return 0;
 }
 
-bool Control::turn_left(int turn_count)
+bool Control::turn_left()
 {
   ros::Publisher control = n.advertise<geometry_msgs::TwistStamped>("/control",1); 
   ros::Publisher pub = n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel", 1);
   geometry_msgs::Twist msg;
   geometry_msgs::TwistStamped msg_pub;
   double BASE_SPEED = 0.2, MOVE_TIME = 4, CLOCK_SPEED = 1; //0.05,1,0.25
-  if (turn_count==3)
-  {
-    BASE_SPEED = 0.05;
-  }
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
 

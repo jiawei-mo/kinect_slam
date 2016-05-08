@@ -36,7 +36,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   if(msg.points[0].y>=LEFT_AVAILABLE && (current_time.sec-turn_time.sec>50)&& (current_time.sec-follow_wall_time.sec>10) &&!action_lock && pose_corrected)    //30s for turn_lock
   { 
     action_lock = 1; //locking the system to prevent operation conflict
-    action_lock = myCtrl.turn_left(turn_count);
+    action_lock = myCtrl.turn_left();
     // action_lock = 1;
     // action_lock = myCtrl.go_straight();
     // action=system("rosrun kinect_slam turn_left");
@@ -49,7 +49,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   if(msg.points[3].x<OBSTACLE_FRONT && msg.points[2].x>OBSTACLE_SIDES &&msg.points[1].x>OBSTACLE_SIDES && !action_lock) //avoid obstacle left
   {
     action_lock = 1;
-    action_lock = myCtrl.turn_left(turn_count);  
+    action_lock = myCtrl.turn_left();  
     action_lock = 1;
     action_lock = myCtrl.turn_right(); 
    // action=system("rosrun kinect_slam turn_left");
@@ -61,7 +61,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     action_lock = 1;
     action_lock = myCtrl.turn_right();  
     action_lock = 1;
-    action_lock = myCtrl.turn_left(turn_count); 
+    action_lock = myCtrl.turn_left(); 
     // action=system("rosrun kinect_slam turn_right");
     // action=system("rosrun kinect_slam turn_left");
     turn_count++;
