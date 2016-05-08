@@ -2,7 +2,7 @@
 
 
 PointCloudNode::PointCloudNode():
-	pioneer_sub(nh, "/pose", 1),
+	pioneer_sub(nh, "/pose1", 1),
 	dep_sub(nh, "/camera/depth/image_rect", 1),
 	pioneer_sync(PioneerPolicy(10), pioneer_sub, dep_sub)
 {
@@ -14,8 +14,18 @@ PointCloudNode::PointCloudNode():
 	// initialize point cloud
 	cloud = PointCloudPtr(new PointCloud());
 	// sync and call callback
+	pioneer_sub.registerCallback(&PointCloudNode::pose_callback, this);
+	dep_sub.registerCallback(&PointCloudNode::image_callback, this);
 	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2));
 	pcl_pub = nh.advertise<PointCloud>("pcl_map", 1);
+}
+
+void PointCloudNode::pose_callback(const geometry_msgs::PoseStampedConstPtr& msg){
+	std::cout << "pose: " << msg->header.stamp << endl;
+}
+
+void PointCloudNode::image_callback(const sensor_msgs::ImageConstPtr& msg){
+	std::cout << "image: " << msg->header.stamp << endl;
 }
 
 
@@ -71,6 +81,8 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	// pass new point cloud on for further processing
 	if (pointcloud_msg->points.size() > 0) {
 		//cloud_append(pointcloud_msg);
+		//PointCloudPtr tmp0 = remove_floor(cloud);
+		//cloud = tmp0;
 		//voxel_filter(0.1);
 		if (num_frames % 25 == 0){
 			//build_octomap();
@@ -160,7 +172,6 @@ void PointCloudNode::cloud_append(PointCloudPtr new_cloud)
 		pt.z = cloud_global->points[i].z;
 		//pt.rgb = cloud_global->points[i].rgb;
 		cloud->points.push_back(pt);
-		cloud_sz++;
 	}
 	num_frames++;
 
@@ -349,4 +360,3 @@ void PointCloudNode::publish_pointcloud()
 	pcl_conversions::toPCL(ros::Time::now(), cloud->header.stamp);
 	pcl_pub.publish(cloud);
 }
-

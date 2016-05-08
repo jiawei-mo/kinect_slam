@@ -51,21 +51,19 @@ typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sens
 class MappingSimulation
 {
 private:
-	int cloud_sz;
 	int num_frames;
 	PointCloudPtr cloud;
 	Eigen::Vector3d state_mean;
 	Eigen::Vector3d init_pose;
 
 	ros::NodeHandle nh;
+	ros::Publisher pcl_pub;
 
 	message_filters::Subscriber<sensor_msgs::Image> dep_sub;
 	message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub;
-
 	message_filters::Subscriber<nav_msgs::Odometry> simulation_sub;
 	//message_filters::Subscriber<geometry_msgs::TransformStamped> simulation_sub;
 	message_filters::Synchronizer<SimulationPolicy> simulation_sync;
-
 	//message_filters::Subscriber<sensor_msgs::Image> img_sub; // for color
 
 
@@ -79,6 +77,11 @@ public:
 	void simulation_callback(const nav_msgs::Odometry::ConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
 	// simulation callback transform message
 	//void simulation_callback(const geometry_msgs::TransformStamped::ConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
+	void state_callback(const nav_msgs::Odometry::ConstPtr& msg);
+	void image_callback(const sensor_msgs::ImageConstPtr& msg);
+	void info_callback(const sensor_msgs::CameraInfoConstPtr& msg);
+
+	void publish_pointcloud();
 
 	void cloud_append(PointCloudPtr);
 	void build_octomap();
