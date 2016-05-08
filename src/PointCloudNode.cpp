@@ -11,8 +11,6 @@ PointCloudNode::PointCloudNode():
 	// state mean
 	state_mean = Eigen::Vector3d::Zero();
 	init_pose = Eigen::Vector3d::Zero();
-	// point cloud size
-	cloud_sz = 0;
 	// number of images received from kinect
 	num_frames = 0;
 	// initialize point cloud
@@ -42,6 +40,7 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 		std::cout << init_pose << endl;
 	}
 
+	/*
 	// PROCESS IMAGE MESSAGES
 	cv::Mat image_depth = cv_bridge::toCvCopy(dep)->image;
 	// set any nan values to zero
@@ -78,7 +77,7 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 			//publish_pointcloud();
 		}
 	}
-
+	*/
 }
 
 
