@@ -49,7 +49,6 @@ private:
 	PointCloudPtr cloud;
 	Eigen::Vector3d state_mean;
 	Eigen::Vector3d init_pose;
-    size_t cloud_sz;
 
 	ros::NodeHandle nh;
 	ros::Publisher pcl_pub;
