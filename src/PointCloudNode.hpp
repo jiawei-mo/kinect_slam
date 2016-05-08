@@ -64,6 +64,8 @@ public:
 	~PointCloudNode(){};
 
 	// real world call back, no color PoseStampedConstPtr
+	void pose_callback(const geometry_msgs::PoseStampedConstPtr& msg);
+	void image_callback(const sensor_msgs::ImageConstPtr& msg);
 	void pioneer_callback(const geometry_msgs::PoseStampedConstPtr& state_msg, const sensor_msgs::ImageConstPtr&  dep);
 	void publish_pointcloud();
 	void cloud_append(PointCloudPtr new_cloud);

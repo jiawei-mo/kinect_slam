@@ -4,24 +4,41 @@
 MappingSimulation::MappingSimulation():
 	simulation_sub(nh, "pose", 1),
 	//simulation_sub(nh, "/tf", 1),
-	dep_sub(nh, "/camera/depth/image", 1), // for simulation
-	info_sub(nh, "/camera/rgb/camera_info", 1),
+	dep_sub(nh, "/camera/depth/image", 1),
+	info_sub(nh, "/camera/depth/camera_info", 1),
 	simulation_sync(SimulationPolicy(10), simulation_sub, dep_sub, info_sub)
 {
-	simulation_sync.registerCallback(boost::bind(&MappingSimulation::simulation_callback, this, _1, _2, _3));
 	// state mean
 	state_mean = Eigen::Vector3d::Zero();
 	init_pose = Eigen::Vector3d::Zero();
-	// point cloud size
-	cloud_sz = 0;
 	// number of images received from kinect
 	num_frames = 0;
 	// initialize point cloud
 	cloud = PointCloudPtr(new PointCloud());
+
+	//subscribers
+	//simulation_sub.registerCallback(&MappingSimulation::state_callback, this);
+	//dep_sub.registerCallback(&MappingSimulation::image_callback, this);
+	//info_sub.registerCallback(&MappingSimulation::info_callback, this);
+	simulation_sync.registerCallback(boost::bind(&MappingSimulation::simulation_callback, this, _1, _2, _3));
+
+	pcl_pub = nh.advertise<PointCloud>("pcl_map", 1);
+
+}
+
+void MappingSimulation::state_callback(const nav_msgs::Odometry::ConstPtr& msg){
+	std::cout << "state: " << msg->header.stamp << endl;
+}
+
+void MappingSimulation::image_callback(const sensor_msgs::ImageConstPtr& msg){
+	std::cout << "image: " << msg->header.stamp << endl;
+}
+
+void MappingSimulation::info_callback(const sensor_msgs::CameraInfoConstPtr& msg){
+	std::cout << "info: " << msg->header.stamp << endl;
 }
 
 
-//void MappingSimulation::simulation_callback(const geometry_msgs::TransformStamped::ConstPtr& state_msg, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
 void MappingSimulation::simulation_callback(const nav_msgs::Odometry::ConstPtr& state_msg, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
 {
 	// PROCESS STATE ESTIAMATE MESSAGE
@@ -74,16 +91,18 @@ void MappingSimulation::simulation_callback(const nav_msgs::Odometry::ConstPtr& 
 	}
 	pointcloud_msg->height = 1;
 	pointcloud_msg->width = pointcloud_msg->points.size();
-
+	std::cout << "size of new cloud " << pointcloud_msg->points.size() << endl;
 
 	// pass new point cloud on for further processing
-	cloud_append(pointcloud_msg);
-	if (num_frames % 10 == 0) {
-		// remove floor points
-		PointCloudPtr tmp0 = remove_floor(cloud);
-		cloud = tmp0;
-		voxel_filter(0.1);
-		build_octomap();
+	if (pointcloud_msg->points.size() > 0) {
+		cloud_append(pointcloud_msg);
+		if (num_frames % 10 == 0){
+			PointCloudPtr tmp0 = remove_floor(cloud);
+			cloud = tmp0;
+			voxel_filter(0.1);
+			build_octomap();
+			publish_pointcloud();
+		}
 	}
 
 }
@@ -165,7 +184,6 @@ void MappingSimulation::cloud_append(PointCloudPtr new_cloud)
 		pt.z = cloud_global->points[i].z;
 		//pt.rgb = cloud_global->points[i].rgb;
 		cloud->points.push_back(pt);
-		cloud_sz++;
 	}
 	num_frames++;
 
@@ -256,4 +274,10 @@ void MappingSimulation::visualize_cloud(PointCloudPtr cloud)
 	}
 }
 
+void MappingSimulation::publish_pointcloud()
+{
+	cloud->header.frame_id = "/map";
+	pcl_conversions::toPCL(ros::Time::now(), cloud->header.stamp);
+	pcl_pub.publish(cloud);
+}
 
