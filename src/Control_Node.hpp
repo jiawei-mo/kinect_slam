@@ -26,12 +26,16 @@ private:
     double correction_threshold;
     ros::Time turn_time;
     double current_theta;
-    double follow_wall_time;
+    ros::Time follow_wall_time;
     bool action_lock;
     bool first_turn;
     bool pose_corrected;
     double avoid_wall;
     ros::Time current_time;
+    ros::Publisher pub;
+    ros::Publisher velocity;
+    int turn_flag;
+    bool follow_wall_flag;
    // double pre_sonar;
 public:
 	Control_Node();

@@ -1,21 +1,21 @@
 #include "Control.hpp"
 #include <cmath>
 
-bool Control::pose_correction(double theta,double cheat_time)
+bool Control::pose_correction(double theta, int turn_flag)
 {
   // ArRobot *robot;
   // robot = new ArRobot();
   lock=0;
-  double time_threshold = 80;
-  double BASE_SPEED = 0.3, MOVE_TIME = 2, CLOCK_SPEED = 1;
-  if (cheat_time>time_threshold)
+  //double time_threshold = 80;
+  double BASE_SPEED = 0.2, MOVE_TIME = 2, CLOCK_SPEED = 1;
+  if (turn_flag>0)
   {
-    BASE_SPEED = 0.2;
+    BASE_SPEED = 0.05;
   }
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   rate.reset();
-  double threshold=PI/90;
+  double threshold=PI/30;
   geometry_msgs::Twist correct;
   geometry_msgs::TwistStamped correct_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
@@ -75,18 +75,42 @@ bool Control::pose_correction(double theta,double cheat_time)
 
 }
 
-bool Control::follow_wall(int flag)
+bool Control::follow_wall(int flag, int step_flag, double distance)
 {
-  double BASE_SPEED = 0.3, MOVE_TIME = 3, CLOCK_SPEED = 1;
+  double MOVE_TIME = 3, CLOCK_SPEED = 1;       //3,1
+  double BASE_SPEED=0.4;
+  double maintain_distance = distance>=0? 1.2:1.2; 
+  current_sonar = n.subscribe("RosAria/sonar",1, &Control::sonarMeassageReceived,this);
+  ////////normal control///////
+  // if(step_flag==1)
+  // {
+  // 	BASE_SPEED = 0.3;
+  // }
+  // else
+  // {
+  // 	BASE_SPEED = 0.1;
+  // 	if((distance<0 && distance >-0.5)||(distance>0 && distance <0.5))
+  // 	{
+  // 		MOVE_TIME = 2;
+  // 	}
+  // }
+  ///////PID control/////
+  double K_p = 1.2;
+  double K_i = 0.1;
+  double K_d = 0.5;
+  double PID_factor;
+  double prop = distance>=0 ? maintain_distance-current_left : maintain_distance+current_right; 
+  double integ = 0;
+  double deriv;
+  double current_error;
+  double pre_error = prop;
+  //////////////////
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
   geometry_msgs::Twist follow_wall_first;
-  // geometry_msgs::Twist follow_wall_second;
-  geometry_msgs::Twist follow_wall_rect;
   geometry_msgs::TwistStamped follow_wall_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
   ros::Publisher velocity =n.advertise<geometry_msgs::TwistStamped>("/control",1);
-  follow_wall_rect.angular.z = -PI/8;
   if (flag==0)
   {
     follow_wall_first.angular.z = PI/8;
@@ -98,23 +122,24 @@ bool Control::follow_wall(int flag)
     // follow_wall_second.angular.z = PI/15;
     // follow_wall_rect.angular.z = PI/20;
   }
+   PID_factor = 0.3;
    while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
    {
-    if (count == 0 || count == 1)
-     {
-      follow_wall_first.linear.x = BASE_SPEED;
-      follow_wall_rect.linear.z = BASE_SPEED; //publish the new velocity to rosaria
+      //compute PID gain
+        current_error = distance>=0 ? maintain_distance - current_left : maintain_distance + current_right;
+        integ += current_error;
+        deriv = pre_error-current_error;
+        if (deriv<=0.5 && prop>=0 && prop<2)
+        {
+   	     PID_factor = K_p*prop + K_i*integ + K_d*deriv;
+   	    }
+   	    std::cout<<"current PID factor is " <<PID_factor<<std::endl;
+      //
+      follow_wall_first.linear.x = BASE_SPEED*PID_factor;
+      follow_wall_first.angular.z = follow_wall_first.angular.z;//* PID_factor;
       pub.publish(follow_wall_first);
-      if (follow_wall_first.angular.z>0)
-      {
-       follow_wall_pub.twist=follow_wall_first;
-      }
-      else
-      {
-       follow_wall_pub.twist=follow_wall_rect;
-      }
+      follow_wall_pub.twist=follow_wall_first;
       follow_wall_pub.twist.angular.z=follow_wall_pub.twist.angular.z/3;
-     }
       count++;
       ROS_INFO_STREAM("The robot is now avoiding wall!");
       follow_wall_pub.header.stamp.sec=ros::Time::now().sec;
@@ -302,3 +327,9 @@ bool Control::check_pose(double theta)
        return (3*PI/2-theta);///int(MOVE_TIME/CLOCK_SPEED);
   }
 }
+
+void Control::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
+ {
+   current_left = msg.points[0].y;
+   current_right = msg.points[6].y;
+ }

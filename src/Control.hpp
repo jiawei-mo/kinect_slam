@@ -6,12 +6,13 @@
 //#include "ArTimeToROSTime.h"
 #include <stdio.h>
 #include <cmath>
+#include <sensor_msgs/PointCloud.h>
 #define PI 3.14159
 class Control
 {
 public:
-	bool pose_correction(double theta,double cheat_time);
-	bool follow_wall(int flag);
+	bool pose_correction(double theta, int turn_flag);
+	bool follow_wall(int flag, int step_flag,double distance);
 	bool turn_left();
 	bool turn_right();
 	bool go_straight();
@@ -20,4 +21,11 @@ public:
 private:
 	ros::NodeHandle n;
 	bool lock;
+	ros::Subscriber current_sonar;
+	ros::Subscriber current_orientation;
+	double current_left;
+	double current_right;
+	double current_theta;
+    void sonarMeassageReceived(const sensor_msgs::PointCloud &msg);
+    //void poseMeassageReceived(const geometry_msgs::PoseStamped &msg)
 };
