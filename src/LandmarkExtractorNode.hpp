@@ -26,6 +26,9 @@ private:
 	dynamic_reconfigure::Server<kinect_slam::LandmarkExtractorConfig> server;
 	dynamic_reconfigure::Server<kinect_slam::LandmarkExtractorConfig>::CallbackType f;
 
+	double MIN_DEPTH;
+	double MAX_DEPTH;
+
 public:
 	LandmarkExtractorNode();
 	~LandmarkExtractorNode(){};

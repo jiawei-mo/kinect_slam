@@ -23,12 +23,11 @@ void EKF_SLAM_Node::CtrlCallback(const geometry_msgs::TwistStamped& ctrl)
   double l_vel = ctrl.twist.linear.x;
   double r_vel = ctrl.twist.angular.z;
   ros::Time current_time_stamp = ctrl.header.stamp;
-  //double delta_t = (current_time_stamp.sec - pre_time_stamp.sec)+(current_time_stamp.nsec - pre_time_stamp.nsec)*1e-9;
   double delta_t = (current_time_stamp.sec - pre_time_stamp.sec);
   // if (current_time_stamp>0)
   // {
-     ROS_INFO_STREAM("Control data receieved");
-     std::cout<<"Delta_T is  "<<delta_t<<"s\n";
+     // ROS_INFO_STREAM("Control data receieved");
+     // std::cout<<"Delta_T is  "<<delta_t<<"s\n";
   // }
   slam_ptr->predict(l_vel, r_vel, delta_t);
   pre_time_stamp = current_time_stamp;
@@ -108,7 +107,8 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
       slam_ptr->add_landmark(measurements(0,new_points[i][0]), measurements(1,new_points[i][0]), measurements(2,new_points[i][0]), descriptors[new_points[i][0]]);
   }
   slam_ptr->landmark_pcl_pub();
-  slam_ptr->print_state();
+  slam_ptr->landmark_count();
+  // slam_ptr->print_state();
 }
 
 void EKF_SLAM_Node::updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t level)

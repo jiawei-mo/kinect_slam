@@ -15,9 +15,6 @@ EKF_SLAM::EKF_SLAM()
 
 	 pcl_pub = nh.advertise<PointCloud> ("points2", 1);
 	 robot_state_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 50);
-
-	 std::vector< std::vector<double> > state_data;
-
 }
 
 EKF_SLAM::EKF_SLAM(Eigen::Vector3d _mean, Eigen::Matrix3d _cov)
@@ -49,36 +46,17 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	Eigen::Matrix3d G;
 	Eigen::MatrixXd V(3,2);
 
-    //Prediction based on linear velocity and angular velocity
-	// if(angular_vel==0)
-	{
-		delta_x = linear_vel*cos(state_mean(2))*delta_t;
-		delta_y = linear_vel*sin(state_mean(2))*delta_t;
-		delta_theta = angular_vel*delta_t;
+	delta_x = linear_vel*cos(state_mean(2))*delta_t;
+	delta_y = linear_vel*sin(state_mean(2))*delta_t;
+	delta_theta = angular_vel*delta_t;
 
-	    G<< 1, 0, (-linear_vel*delta_t*sin(state_mean(2))),
-	        0, 1, (linear_vel*delta_t*cos(state_mean(2))),
-	        0, 0, 1;
+    G<< 1, 0, (-linear_vel*delta_t*sin(state_mean(2))),
+        0, 1, (linear_vel*delta_t*cos(state_mean(2))),
+        0, 0, 1;
 
-	    V<< -cos(state_mean(2))*delta_t, 0,
-	        -sin(state_mean(2))*delta_t, 0,
-	        0, -delta_t;
-    }
-  //   else
-  //   {
-  //   	double radius = linear_vel / angular_vel;
-		// delta_x = -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t);
-		// delta_y = radius*cos(state_mean(2)) - radius*cos(state_mean(2)+angular_vel*delta_t);
-		// delta_theta = angular_vel*delta_t;
-
-	 //    G<< 1, 0, -radius*cos(state_mean(2)) + radius*cos(state_mean(2)+angular_vel*delta_t),
-	 //        0, 1, -radius*sin(state_mean(2)) + radius*sin(state_mean(2)+angular_vel*delta_t),
-	 //        0, 0, 1;
-
-	 //    V<< (-sin(state_mean(2))+sin(state_mean(2)+angular_vel*delta_t))/angular_vel, radius/angular_vel*sin(state_mean(2))-radius/angular_vel*sin(state_mean(2)+angular_vel*delta_t)+radius*cos(state_mean(2)+angular_vel*delta_t)*delta_t,
-	 //        (cos(state_mean(2))-cos(state_mean(2)+angular_vel*delta_t))/angular_vel, -radius/angular_vel*cos(state_mean(2))+radius/angular_vel*cos(state_mean(2)+angular_vel*delta_t)+radius*sin(state_mean(2)+angular_vel*delta_t)*delta_t,
-	 //        0, delta_t;
-  //   }
+    V<< -cos(state_mean(2))*delta_t, 0,
+        -sin(state_mean(2))*delta_t, 0,
+        0, -delta_t;
 
 	delta_state << delta_x,
 				   delta_y,
@@ -120,20 +98,14 @@ void EKF_SLAM::predict(double linear_vel, double angular_vel, double delta_t)
 	test_pose.pose.orientation.w = cos(state_mean(2)/2);
     robot_state_pub.publish(test_pose);
 
-    // write covariance and state estimate to file
-    /*
-	std::vector<double> one_state;
-	one_state.push_back(state_cov(0,0));
-	one_state.push_back(state_cov(1,1));
-	one_state.push_back(state_cov(2,2));
-	one_state.push_back(state_mean(0));
-	one_state.push_back(state_mean(1));
-	one_state.push_back(state_mean(2));
-	state_data.push_back(one_state);
-	if (state_data.size() % 10 == 0) {
-		write_to_csv("propagation.csv", state_data);
+    // write covariance and state estimate to file every couple of iterations
+	std::vector<double> current_state = state_to_vector();
+	propagation_history.push_back(current_state);
+	if (propagation_history.size() % 10 == 0) {
+		// default location of file: ~/.ros/filename.csv
+		write_to_csv("propagation.csv", propagation_history);
 	}
-	*/
+
 
 }
 
@@ -190,15 +162,15 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	int mm_count = measurements_idx.rows();
 	Eigen::MatrixXd H_accu(3*mm_count, state_mean.rows());
 	Eigen::MatrixXd R_accu(3*mm_count, 3*mm_count);
-	Eigen::VectorXd _measurement(3*mm_count);
+	Eigen::VectorXd _measurements(3*mm_count);
 	for(int mm_i=0; mm_i<mm_count; mm_i++)
 	{
 		int landmark_idx = measurements_idx(mm_i);
 		double q_x =  (state_mean(3+landmark_idx*3) - state_mean(0))*cos(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*sin(state_mean(2)) - KINECT_DISP;
 		double q_y = -(state_mean(3+landmark_idx*3) - state_mean(0))*sin(state_mean(2)) + (state_mean(3+landmark_idx*3+1) - state_mean(1))*cos(state_mean(2));
-		_measurement(3*mm_i)=q_x;
-		_measurement(3*mm_i+1)=q_y;
-		_measurement(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
+		_measurements(3*mm_i)=q_x;
+		_measurements(3*mm_i+1)=q_y;
+		_measurements(3*mm_i+2)=state_mean(3+landmark_idx*3+2);
 
 
 		Eigen::MatrixXd F;
@@ -230,26 +202,24 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	}
 	//std::cout<<"before inverse"<<std::endl;
 	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
+	S = (S + S.transpose()) / 2;
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
-	//std::cout<<"after inverse"<<std::endl;
-	state_mean += K*(measurements - _measurement);
-    //normalize the orientation range
-    if(state_mean(2)>=2*PI)
-	{
-		state_mean(2)=state_mean(2)-2*PI;
-	}
-	else if(state_mean(2)<0)
-	{
-		state_mean(2)=2*PI+state_mean(2);
-	}
-	else
-	{
-    }
-	//std::cout<<"mean update"<<std::endl;
-	state_cov = state_cov - K*S*K.transpose();
-	state_cov = (state_cov + state_cov.transpose()) / 2;
-	// state_cov = (Eigen::MatrixXd::Identity(state_cov.rows(), state_cov.cols()) - K*H)*state_cov;
-	//std::cout<<"end"<<std::endl;
+	std::cout<<"res: "<<std::endl<< measurements - _measurements<<std::endl;
+	double S_cond = S.norm() * (S.inverse()).norm();
+	if (!(S_cond>0 && S_cond<80)) return;
+	// std::cout<<"S: "<<std::endl<<S_cond<<std::endl<<"end of S"<<std::endl;
+	// state_mean += K*(measurements - _measurements);
+ //    //normalize the orientation range
+ //    if(state_mean(2)>=2*PI)
+	// {
+	// 	state_mean(2)=state_mean(2)-2*PI;
+	// }
+	// else if(state_mean(2)<0)
+	// {
+	// 	state_mean(2)=2*PI+state_mean(2);
+	// }
+	// state_cov = state_cov - K*S*K.transpose();
+	// state_cov = (state_cov + state_cov.transpose()) / 2;
 
 	geometry_msgs::PoseStamped test_pose;
 	ros::Time new_now = ros::Time::now();
@@ -261,6 +231,12 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	test_pose.pose.orientation.z = sin(state_mean(2)/2);
 	test_pose.pose.orientation.w = cos(state_mean(2)/2);
     robot_state_pub.publish(test_pose);
+
+    std::vector<double> current_state = state_to_vector();
+	update_history.push_back(current_state);
+	if (update_history.size() % 10 == 0) {
+		write_to_csv("update.csv", update_history);
+	}
 }
 
 void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<std::array<size_t, 3> >& matches, std::vector<std::array<size_t, 3> >& new_points, double max_signature_threshold, double match_threshold, double new_points_threshold)
@@ -291,7 +267,7 @@ void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynami
       std::array<size_t, 3> match_i = {i, idx, dist};
       matches.push_back(match_i);
     }
-    else if(dist > new_points_threshold && idx>0)
+    else if(dist > new_points_threshold)
     {
       std::array<size_t, 3> np_i = {i, idx, dist};
       new_points.push_back(np_i);
@@ -357,14 +333,34 @@ void EKF_SLAM::landmark_count()
 
 void EKF_SLAM::write_to_csv(std::string filename, std::vector< std::vector<double> > dat)
 {
-	std::cout << "writing to file" << std::endl;
 	std::ofstream myfile;
 	myfile.open(filename);
 	for(size_t  i = 0; i < dat.size(); ++i) {
-		for (size_t j = 0; j < 6; ++j) {
-			myfile << dat[i][j] << ',';
+		for (size_t j = 0; j < 12; ++j) {
+			if (j < 11) {
+				myfile << dat[i][j] << ',';
+			} else {
+				myfile << dat[i][j] << '\n';
+			}
 		}
-		myfile << '\n';
 	}
 	myfile.close();
+}
+
+
+std::vector<double> EKF_SLAM::state_to_vector() {
+	std::vector<double> rval;
+	rval.push_back(state_cov(0,0));
+	rval.push_back(state_cov(0,1));
+	rval.push_back(state_cov(0,2));
+	rval.push_back(state_cov(1,0));
+	rval.push_back(state_cov(1,1));
+	rval.push_back(state_cov(1,2));
+	rval.push_back(state_cov(2,0));
+	rval.push_back(state_cov(2,1));
+	rval.push_back(state_cov(2,2));
+	rval.push_back(state_mean(0));
+	rval.push_back(state_mean(1));
+	rval.push_back(state_mean(2));
+	return rval;
 }
