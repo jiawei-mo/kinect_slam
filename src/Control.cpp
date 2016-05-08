@@ -7,7 +7,7 @@ bool Control::pose_correction(double theta, int turn_flag)
   // robot = new ArRobot();
   lock=0;
   //double time_threshold = 80;
-  double BASE_SPEED = 0.2, MOVE_TIME = 2, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.3, MOVE_TIME = 2, CLOCK_SPEED = 1;
   if (turn_flag>0)
   {
     BASE_SPEED = 0.05;
@@ -95,7 +95,7 @@ bool Control::follow_wall(int flag, int step_flag, double distance)
   // 	}
   // }
   ///////PID control/////
-  double K_p = 1.2;
+  double K_p = 2;
   double K_i = 0.1;
   double K_d = 0.5;
   double PID_factor;
@@ -148,42 +148,22 @@ bool Control::follow_wall(int flag, int step_flag, double distance)
       ros::spinOnce();
       rate.sleep();
    }
-   // count=0;
-   // while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
-   // {
-   //  if (count == 0 || count == 1)
-   //   {
-   //    follow_wall_second.linear.x = BASE_SPEED;
-   //    follow_wall_rect.linear.x = BASE_SPEED; //publish the new velocity to rosaria
-   //    pub.publish(follow_wall_second);
-   //    if (follow_wall_second.angular.z<0)
-   //    {
-   //      follow_wall_pub.twist=follow_wall_second;
-   //    }
-   //    else
-   //    {
-   //      follow_wall_pub.twist=follow_wall_rect;
-   //    }
-   //    follow_wall_pub.twist.angular.z=follow_wall_pub.twist.angular.z/3;
-   //   }
-   //    count++;
-   //    ROS_INFO_STREAM("The robot is now avoiding wall!");
-   //    follow_wall_pub.header.stamp.sec=ros::Time::now().toSec();
-   //    velocity.publish(follow_wall_pub);
-   //    ros::spinOnce();
-   //    rate.sleep();
-   // }
+
    ROS_INFO_STREAM("The robot finished avoiding wall!");
    return 0;
 }
 
-bool Control::turn_left()
+bool Control::turn_left(int turn_count)
 {
   ros::Publisher control = n.advertise<geometry_msgs::TwistStamped>("/control",1); 
   ros::Publisher pub = n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel", 1);
   geometry_msgs::Twist msg;
   geometry_msgs::TwistStamped msg_pub;
   double BASE_SPEED = 0.2, MOVE_TIME = 4, CLOCK_SPEED = 1; //0.05,1,0.25
+  if (turn_count==3)
+  {
+    BASE_SPEED = 0.05;
+  }
   int count = 0;
   ros::Rate rate(CLOCK_SPEED);
 

@@ -36,7 +36,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   if(msg.points[0].y>=LEFT_AVAILABLE && (current_time.sec-turn_time.sec>50)&& (current_time.sec-follow_wall_time.sec>10) &&!action_lock && pose_corrected)    //30s for turn_lock
   { 
     action_lock = 1; //locking the system to prevent operation conflict
-    action_lock = myCtrl.turn_left();
+    action_lock = myCtrl.turn_left(turn_count);
     // action_lock = 1;
     // action_lock = myCtrl.go_straight();
     // action=system("rosrun kinect_slam turn_left");
@@ -49,7 +49,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
   if(msg.points[3].x<OBSTACLE_FRONT && msg.points[2].x>OBSTACLE_SIDES &&msg.points[1].x>OBSTACLE_SIDES && !action_lock) //avoid obstacle left
   {
     action_lock = 1;
-    action_lock = myCtrl.turn_left();  
+    action_lock = myCtrl.turn_left(turn_count);  
     action_lock = 1;
     action_lock = myCtrl.turn_right(); 
    // action=system("rosrun kinect_slam turn_left");
@@ -61,18 +61,18 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     action_lock = 1;
     action_lock = myCtrl.turn_right();  
     action_lock = 1;
-    action_lock = myCtrl.turn_left(); 
+    action_lock = myCtrl.turn_left(turn_count); 
     // action=system("rosrun kinect_slam turn_right");
     // action=system("rosrun kinect_slam turn_left");
     turn_count++;
   }
   //follow wall
   current_time = ros::Time::now();
- if ((msg.points[0].y<=0.7 || msg.points[6].y>-1.1) && !action_lock && ((current_time.sec-follow_wall_time.sec>20 && current_time.sec-turn_time.sec>20 )|| first_turn))//&& turn_count>0 && current_time-turn_time>30)
+ if ((msg.points[0].y<=0.7 || msg.points[6].y>-0.9) && !action_lock && ((current_time.sec-follow_wall_time.sec>20 && current_time.sec-turn_time.sec>20 )|| first_turn))//&& turn_count>0 && current_time-turn_time>30)
  {
    follow_wall_time = ros::Time::now();
    action_lock = 1;
-   if ((msg.points[0].y<=0.7) && (msg.points[6].y>-1.1))
+   if ((msg.points[0].y<=0.7) && (msg.points[6].y>-0.9))
    {
 
    }
