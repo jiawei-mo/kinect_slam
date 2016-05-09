@@ -14,8 +14,8 @@ PointCloudNode::PointCloudNode():
 	// initialize point cloud
 	cloud = PointCloudPtr(new PointCloud());
 	// sync and call callback
-	pioneer_sub.registerCallback(&PointCloudNode::pose_callback, this);
-	dep_sub.registerCallback(&PointCloudNode::image_callback, this);
+	//pioneer_sub.registerCallback(&PointCloudNode::pose_callback, this);
+	//dep_sub.registerCallback(&PointCloudNode::image_callback, this);
 	pioneer_sync.registerCallback(boost::bind(&PointCloudNode::pioneer_callback, this, _1, _2));
 	pcl_pub = nh.advertise<PointCloud>("pcl_map", 1);
 }
@@ -50,7 +50,7 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 		std::cout << init_pose << endl;
 	}
 
-	
+	/*
 	// PROCESS IMAGE MESSAGES
 	cv::Mat image_depth = cv_bridge::toCvCopy(dep)->image;
 	// set any nan values to zero
@@ -89,7 +89,8 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 			//publish_pointcloud();
 		}
 	}
-	
+	*/
+
 }
 
 

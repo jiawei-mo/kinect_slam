@@ -9,7 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   pcl_ros
   pcl_conversions
-  octomap
   cv_bridge
   dynamic_reconfigure
   image_transport
@@ -60,7 +59,6 @@ link_libraries(${OCTOMAP_LIBRARIES})
 target_link_libraries(slam_node ${catkin_LIBRARIES})
 target_link_libraries(landmark_node ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 target_link_libraries(control_node ${catkin_LIBRARIES})
-target_link_libraries(truth_node ${catkin_LIBRARIES})
 target_link_libraries(pc_node ${OpenCV_LIBRARIES} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
 target_link_libraries(map_node ${OpenCV_LIBRARIES} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
 
