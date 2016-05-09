@@ -57,7 +57,7 @@ private:
 	message_filters::Subscriber<geometry_msgs::PoseStamped> pioneer_sub;
 	message_filters::Synchronizer<PioneerPolicy> pioneer_sync;
 	//message_filters::Subscriber<sensor_msgs::Image> img_sub; // for color
-
+	size_t cloud_sz;
 
 public:
 	PointCloudNode();
