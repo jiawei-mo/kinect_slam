@@ -37,7 +37,7 @@ bool Control::pose_correction(double theta, int turn_flag, int turn_count)
              break;
   }
   correct.angular.z = desire_orientation - theta;
-  if (desire_orientation = 0 && theta > PI*3/2)
+  if (desire_orientation == 0 && theta > PI*3/2)
   {
      correct.angular.z = 2*PI - theta;
   }
