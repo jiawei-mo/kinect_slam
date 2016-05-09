@@ -54,7 +54,6 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     action_lock = myCtrl.turn_right(); 
    // action=system("rosrun kinect_slam turn_left");
    // action=system("rosrun kinect_slam turn_right");
-    turn_count++; 
   } 
   if(msg.points[3].x<OBSTACLE_FRONT && msg.points[4].x>OBSTACLE_SIDES &&msg.points[5].x>OBSTACLE_SIDES && !action_lock) //avoid obstacle left
   {
@@ -64,7 +63,6 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     action_lock = myCtrl.turn_left(); 
     // action=system("rosrun kinect_slam turn_right");
     // action=system("rosrun kinect_slam turn_left");
-    turn_count++;
   }
   //follow wall
   current_time = ros::Time::now();
@@ -97,7 +95,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    if (!action_lock)
    { 
      action_lock = 1;
-     action_lock = myCtrl.pose_correction(current_theta,turn_flag);
+     action_lock = myCtrl.pose_correction(current_theta,turn_flag,turn_count);
      turn_flag--;
    }
 }

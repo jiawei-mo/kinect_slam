@@ -1,11 +1,10 @@
 #include "Control.hpp"
 #include <cmath>
 
-bool Control::pose_correction(double theta, int turn_flag)
+bool Control::pose_correction(double theta, int turn_flag, int turn_count)
 {
   // ArRobot *robot;
   // robot = new ArRobot();
-  lock=0;
   //double time_threshold = 80;
   double BASE_SPEED = 0.3, MOVE_TIME = 2, CLOCK_SPEED = 1;
   if (turn_flag>0)
@@ -23,31 +22,21 @@ bool Control::pose_correction(double theta, int turn_flag)
   // ros::Publisher test_theta = n.advertise<geometry_msgs::Pose2D>("/test_theta",1);
   // geometry_msgs::Pose2D temp_theta;
   // temp_theta.theta=theta;
-  correct.angular.z=0;
-  if (abs(0-theta)<threshold && !lock)
+  double desire_orientation;
+  switch (turn_count)
   {
-      correct.angular.z=(0-theta);///int(MOVE_TIME/CLOCK_SPEED);
-      lock=1;
+    case 0 : desire_orientation = 0;
+             break;
+    case 1: desire_orientation = PI/2;
+             break;
+    case 2: desire_orientation = PI;
+             break;
+    case 3 : desire_orientation = 3*PI/2;
   }
-  if (abs(2*PI-theta)<threshold && !lock)
+  correct.angular.z = desire_orientation - theta;
+  if (desire_orientation = 0 && theta > PI*3/2)
   {
-      correct.angular.z=(2*PI-theta);///int(MOVE_TIME/CLOCK_SPEED);
-      lock=1;
-  }
-  if (abs(PI/2-theta)<threshold && !lock)
-  {
-      correct.angular.z=(PI/2-theta);///int(MOVE_TIME/CLOCK_SPEED);
-      lock=1;
-  }
-  if (abs(PI-theta)<threshold && !lock)
-  {
-      correct.angular.z=(PI-theta);///int(MOVE_TIME/CLOCK_SPEED);
-      lock=1;
-  }
-  if (abs((3*PI/2-theta)<threshold) && !lock)
-  {
-       correct.angular.z=(3*PI/2-theta);///int(MOVE_TIME/CLOCK_SPEED);
-       lock=1;
+     correct.angular.z = 2*PI - theta;
   }
   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
    {

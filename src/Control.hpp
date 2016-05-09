@@ -11,7 +11,7 @@
 class Control
 {
 public:
-	bool pose_correction(double theta, int turn_flag);
+	bool pose_correction(double theta, int turn_flag, int turn_count);
 	bool follow_wall(int flag, int step_flag,double distance);
 	bool turn_left();
 	bool turn_right();
@@ -20,7 +20,6 @@ public:
 	double compute_pose_correct(double theta);
 private:
 	ros::NodeHandle n;
-	bool lock;
 	ros::Subscriber current_sonar;
 	ros::Subscriber current_orientation;
 	double current_left;
