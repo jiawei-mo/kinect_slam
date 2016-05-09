@@ -32,6 +32,9 @@ bool Control::pose_correction(double theta, int turn_flag, int turn_count)
     case 2: desire_orientation = PI;
              break;
     case 3 : desire_orientation = 3*PI/2;
+             break;
+    default : desire_orientation = PI*2;
+             break;
   }
   correct.angular.z = desire_orientation - theta;
   if (desire_orientation = 0 && theta > PI*3/2)
