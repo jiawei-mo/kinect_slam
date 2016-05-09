@@ -6,15 +6,15 @@ bool Control::pose_correction(double theta, int turn_flag, int turn_count)
   // ArRobot *robot;
   // robot = new ArRobot();
   //double time_threshold = 80;
-  double BASE_SPEED = 0.3, MOVE_TIME = 2, CLOCK_SPEED = 1;
+  lock = 0;
+  double BASE_SPEED = 0.4, MOVE_TIME = 2, CLOCK_SPEED = 1;
   if (turn_flag>0)
   {
     BASE_SPEED = 0.05;
   }
   int count = 0;
+  double threshold = PI/10;
   ros::Rate rate(CLOCK_SPEED);
-  rate.reset();
-  double threshold=PI/20;
   geometry_msgs::Twist correct;
   geometry_msgs::TwistStamped correct_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
@@ -22,24 +22,67 @@ bool Control::pose_correction(double theta, int turn_flag, int turn_count)
   // ros::Publisher test_theta = n.advertise<geometry_msgs::Pose2D>("/test_theta",1);
   // geometry_msgs::Pose2D temp_theta;
   // temp_theta.theta=theta;
-  double desire_orientation;
-  switch (turn_count)
+  ///////////////////
+  // double desire_orientation;
+  // switch (turn_count)
+  // {
+  //   case 0 : desire_orientation = 0;
+  //            break;
+  //   case 1: desire_orientation = PI/2;
+  //            break;
+  //   case 2: desire_orientation = PI;
+  //            break;
+  //   case 3 : desire_orientation = 3*PI/2;
+  //            break;
+  //   default : desire_orientation = PI*2;
+  //            break;
+  // }
+  // correct.angular.z = desire_orientation - theta;
+  // if (desire_orientation == 0 && theta > PI*3/2)
+  // {
+  //    correct.angular.z = 2*PI - theta;
+  // }
+  ///////////
+  // double desire_orientation = 0;
+  // double matching_distance;
+  // double min_matching_distance = 3*PI; 
+  // for (int i=0;i<4;i++)
+  //  {
+  //     matching_distance = abs(desire_orientation-i*PI/2);
+  //     if(matching_distance<min_matching_distance)
+  //     {
+  //       desire_orientation=i*PI/2;
+  //       min_matching_distance=matching_distance;
+  //     }
+  //  }
+  //  if(abs(2*PI-theta)<threshold)
+  //  desire_orientation = 2*PI; 
+  //  correct.angular.z = desire_orientation - theta;
+   ////////////
+   if (abs(0-theta)<threshold && !lock)
   {
-    case 0 : desire_orientation = 0;
-             break;
-    case 1: desire_orientation = PI/2;
-             break;
-    case 2: desire_orientation = PI;
-             break;
-    case 3 : desire_orientation = 3*PI/2;
-             break;
-    default : desire_orientation = PI*2;
-             break;
+      correct.angular.z=(0-theta);///int(MOVE_TIME/CLOCK_SPEED);
+      lock=1;
   }
-  correct.angular.z = desire_orientation - theta;
-  if (desire_orientation == 0 && theta > PI*3/2)
+  if (abs(2*PI-theta)<threshold && !lock)
   {
-     correct.angular.z = 2*PI - theta;
+      correct.angular.z=(2*PI-theta);///int(MOVE_TIME/CLOCK_SPEED);
+      lock=1;
+  }
+  if (abs(PI/2-theta)<threshold && !lock)
+  {
+      correct.angular.z=(PI/2-theta);///int(MOVE_TIME/CLOCK_SPEED);
+      lock=1;
+  }
+  if (abs(PI-theta)<threshold && !lock)
+  {
+      correct.angular.z=(PI-theta);///int(MOVE_TIME/CLOCK_SPEED);
+      lock=1;
+  }
+  if (abs((3*PI/2-theta)<threshold) && !lock)
+  {
+       correct.angular.z=(3*PI/2-theta);///int(MOVE_TIME/CLOCK_SPEED);
+       lock=1;
   }
   while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
    {
@@ -71,14 +114,14 @@ bool Control::pose_correction(double theta, int turn_flag, int turn_count)
 bool Control::follow_wall(int flag, int step_flag, double distance)
 {
   double MOVE_TIME = 3, CLOCK_SPEED = 1;       //3,1
-  double BASE_SPEED=0.4;
+  double BASE_SPEED=0.6;
   double maintain_distance = distance>=0? 1.2:1.2; 
   current_sonar = n.subscribe("RosAria/sonar",1, &Control::sonarMeassageReceived,this);
   ////////normal control///////
-  // if(step_flag==1)
-  // {
-  // 	BASE_SPEED = 0.3;
-  // }
+  if(step_flag==2)
+  {
+  	BASE_SPEED = 0.05;
+  }
   // else
   // {
   // 	BASE_SPEED = 0.1;

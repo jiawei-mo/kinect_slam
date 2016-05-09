@@ -41,7 +41,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
     // action_lock = myCtrl.go_straight();
     // action=system("rosrun kinect_slam turn_left");
     // action = system("rosrun kinect_slam go_straight");
-    turn_count++;
+    turn_count+=action_lock;
     turn_flag =2;
     turn_time=current_time;
     first_turn = 0;

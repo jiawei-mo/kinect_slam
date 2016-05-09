@@ -25,6 +25,7 @@ private:
 	double current_left;
 	double current_right;
 	double current_theta;
+	double lock;
     void sonarMeassageReceived(const sensor_msgs::PointCloud &msg);
     //void poseMeassageReceived(const geometry_msgs::PoseStamped &msg)
 };
