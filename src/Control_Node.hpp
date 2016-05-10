@@ -23,6 +23,7 @@ private:
     double correction_threshold;
     ros::Time turn_time;
     double current_theta;
+    double current_EKF_theta;
     ros::Time follow_wall_time;
     bool action_lock;
     bool first_turn;
