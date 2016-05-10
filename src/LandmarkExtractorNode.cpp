@@ -7,11 +7,11 @@
 #include <math.h>
 #include <iostream>
 
-LandmarkExtractorNode::LandmarkExtractorNode(): 
+LandmarkExtractorNode::LandmarkExtractorNode():
   img_sub(nh, "/camera/rgb/image_color", 1),
   dep_sub(nh, "/camera/depth/image", 1),
-	info_sub(nh, "/camera/depth/camera_info", 1),
-	sync(KinectSyncPolicy(10), img_sub, dep_sub, info_sub)
+  info_sub(nh, "/camera/depth/camera_info", 1),
+  sync(KinectSyncPolicy(10), img_sub, dep_sub, info_sub)
 {
   sync.registerCallback(boost::bind(&LandmarkExtractorNode::imageMessageCallback, this, _1, _2, _3));
   fd_ptr = boost::shared_ptr<HarrisDetector>(new HarrisDetector(7, 50, 50, 3, true, false, 7, 3));
@@ -21,7 +21,7 @@ LandmarkExtractorNode::LandmarkExtractorNode():
 
   landmark_pub = nh.advertise<kinect_slam::LandmarkMsg>("landmarkWithDscrt", 50);
   raw_point_pub = nh.advertise<kinect_slam::LandmarkMsg>("raw_depth",50);
-
+  pcl_current_frame_pub = nh.advertise<pcl::PointCloud<pcl::PointXYZ>>("pcl_current_frame", 50);
 }
 
 void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
@@ -37,7 +37,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   {
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
-  } 
+  }
 
   cv::Mat clr_img, depth;
   img_ptr->image.copyTo(clr_img);
@@ -49,7 +49,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
 
   std::vector<cv::KeyPoint> kp;
   fd_ptr->detect(gry_img, kp);
-  if(kp.size()==0) return; 
+  if(kp.size()==0) return;
 
   std::vector< boost::dynamic_bitset<> > dscrt;
   de_ptr->extract(gry_img, kp, dscrt);
@@ -70,73 +70,109 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   //publish all points
   for(int i=0;i<depth.rows/2;i++)
   {
-  	for(int j=0;j<depth.cols/3;j++)
-  	{
-  		double z = depth.at<float>(i,j); //only collect point for left wall
-  		if(z<2.5)
-  		{
-  		  double x = z * (j - cx) / fx;
-	  	  double y = z * (i - cy) / fy;
-	  	  raw_measurement_msg.position_x.push_back(z);
-	      raw_measurement_msg.position_y.push_back(-x);
-	      raw_measurement_msg.position_signature.push_back(-y);
-	      raw_measurement_msg.landmark_count++;
-  		}
-  	}
+    for(int j=0;j<depth.cols/3;j++)
+    {
+      double z = depth.at<float>(i,j); //only collect point for left wall
+      if(z<2.5)
+      {
+        double x = z * (j - cx) / fx;
+        double y = z * (i - cy) / fy;
+        raw_measurement_msg.position_x.push_back(z);
+        raw_measurement_msg.position_y.push_back(-x);
+        raw_measurement_msg.position_signature.push_back(-y);
+        raw_measurement_msg.landmark_count++;
+      }
+    }
   }
   if(raw_measurement_msg.landmark_count<=100)
   {
-  	 raw_measurement_msg.position_x.clear();
-	 raw_measurement_msg.position_y.clear();
-	 raw_measurement_msg.position_signature.clear();
-	 raw_measurement_msg.landmark_count=0;
+     raw_measurement_msg.position_x.clear();
+   raw_measurement_msg.position_y.clear();
+   raw_measurement_msg.position_signature.clear();
+   raw_measurement_msg.landmark_count=0;
    for(int i=depth.rows/2;i<depth.rows;i++)
    {
-  	for(int j=depth.cols*2/3;j<depth.cols;j++)
-  	{
-  		double z = depth.at<float>(i,j); //only collect point for left wall
-  		if(z<2.5)
-  		{
-  		  double x = z * (j - cx) / fx;
-	  	  double y = z * (i - cy) / fy;
-	  	  raw_measurement_msg.position_x.push_back(z);
-	      raw_measurement_msg.position_y.push_back(-x);
-	      raw_measurement_msg.position_signature.push_back(-y);
-	      raw_measurement_msg.landmark_count++;
-  		}
-  	}
+    for(int j=depth.cols*2/3;j<depth.cols;j++)
+    {
+      double z = depth.at<float>(i,j); //only collect point for left wall
+      if(z<2.5)
+      {
+        double x = z * (j - cx) / fx;
+        double y = z * (i - cy) / fy;
+        raw_measurement_msg.position_x.push_back(z);
+        raw_measurement_msg.position_y.push_back(-x);
+        raw_measurement_msg.position_signature.push_back(-y);
+        raw_measurement_msg.landmark_count++;
+      }
+    }
   }
   }
   //
-  // std::cout <<raw_measurement_msg.landmark_count<<std::endl; 
+  // std::cout <<raw_measurement_msg.landmark_count<<std::endl;
   raw_point_pub.publish(raw_measurement_msg);
   //
   for(int i=0; i<kp.size(); i++)
   {
-  	double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
+    double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
     if(z>MIN_DEPTH && z<MAX_DEPTH)
     {
-	    // std::cout<<"Depth: "<<z<<std::endl;
-	  	double x = z * (kp[i].pt.x - cx) / fx;
-	  	double y = z * (kp[i].pt.y - cy) / fy;
-	    new_measurement_msg.position_x.push_back(z);
-	    new_measurement_msg.position_y.push_back(-x);
-	    new_measurement_msg.position_signature.push_back(-y);
-	    for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
-	    new_measurement_msg.landmark_count++;
+      // std::cout<<"Depth: "<<z<<std::endl;
+      double x = z * (kp[i].pt.x - cx) / fx;
+      double y = z * (kp[i].pt.y - cy) / fy;
+      new_measurement_msg.position_x.push_back(z);
+      new_measurement_msg.position_y.push_back(-x);
+      new_measurement_msg.position_signature.push_back(-y);
+      for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
+      new_measurement_msg.landmark_count++;
       circle(clr_img, kp[i].pt, 5, CV_RGB(255,0,0));
-  	}
+    }
   }
 
   cv::namedWindow("Feature Points");
   cv::imshow("Feature Points", clr_img);
   cv::waitKey(3);
- 	landmark_pub.publish(new_measurement_msg);
+  landmark_pub.publish(new_measurement_msg);
+
+
+
+  // BUILD POINT CLOUD
+  cv::patchNaNs(depth, 0.0);
+  PointCloudPtr pointcloud_msg (new PointCloud);
+  Point pt;
+  for (int i = 0; i < depth.rows; i+=4) {
+    for (int j = 0; j < depth.cols; j+=4) {
+      double z = depth.at<short int>(cv::Point(i,j)) / 1000.0;
+      if (z > 0.0) {
+        double x = z * (j - cx) / fx;
+        double y = z * (i - cy) / fy;
+        pt.x = z;
+        pt.y = -x;
+        pt.z = -y;
+        pointcloud_msg->points.push_back(pt);
+      }
+    }
+  }
+  pointcloud_msg->height = 1;
+  pointcloud_msg->width = pointcloud_msg->points.size();
+  // publish the point cloud
+  pointcloud_msg->header.frame_id = "/map";
+  pcl_conversions::toPCL(ros::Time::now(), pointcloud_msg->header.stamp);
+
+  // apply filtering to downsample point cloud further
+  // Divide space into voxels, replaces points within a voxels by their centroids.
+  pcl::VoxelGrid<Point> sor;
+  sor.setInputCloud(pointcloud_msg);
+  // one cell within each "leafsize" meters
+  float leafsize = 0.1;
+  sor.setLeafSize(leafsize, leafsize, leafsize);
+  sor.filter(*pointcloud_msg);
+  // publish filtered cloud
+  pcl_current_frame_pub.publish(pointcloud_msg);
 }
 
 void LandmarkExtractorNode::updateConfig(kinect_slam::LandmarkExtractorConfig &config, uint32_t level)
 {
-    int hws = config.harris_window_size; 
+    int hws = config.harris_window_size;
     bool haf = config.harris_anms_flag;
     int har = config.harris_anms_radius;
     bool hff = config.harris_fix_number_flag;
