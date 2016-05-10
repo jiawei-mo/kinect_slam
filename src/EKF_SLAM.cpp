@@ -301,7 +301,7 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
     {
       if(l_matches[i][0] == r_matches[j][1] && l_matches[i][1] == r_matches[j][0])
       {
-	    // std::cout<<"dist: "<<l_matches[i][2]<<std::endl;
+	    std::cout<<"dist: "<<l_matches[i][2]<<std::endl;
         matches.push_back(l_matches[i]);
 	  }
     }

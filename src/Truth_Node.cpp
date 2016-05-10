@@ -28,10 +28,10 @@ public:
 				double y = tfmsg->transforms[i].transform.rotation.y;
 				double z = tfmsg->transforms[i].transform.rotation.z;
 				double w = tfmsg->transforms[i].transform.rotation.w;
-				test_pose.pose.orientation.x = (w-z)/2;
-				test_pose.pose.orientation.y = (x+y)/2;
-				test_pose.pose.orientation.z = (y-x)/2;
-				test_pose.pose.orientation.w = (z+w)/2;
+				test_pose.pose.orientation.x = 0.707*x;
+				test_pose.pose.orientation.y = 0.707*y;
+				test_pose.pose.orientation.z = 0.707*z;
+				test_pose.pose.orientation.w = 0.707*w;
 			    t_pub.publish(test_pose);
 			}
 		}
