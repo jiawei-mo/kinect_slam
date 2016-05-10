@@ -141,8 +141,8 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   Point pt;
   for (int i = 0; i < depth.rows; i+=4) {
     for (int j = 0; j < depth.cols; j+=4) {
-      double z = depth.at<float>(i, j);
-      if (z>MIN_DEPTH && z<MAX_DEPTH) {
+      double z = depth.at<float>(i,j);
+      if (z > MIN_DEPTH && z < MAX_DEPTH) {
         double x = z * (j - cx) / fx;
         double y = z * (i - cy) / fy;
         pt.x = z;
@@ -159,15 +159,33 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   pcl_conversions::toPCL(ros::Time::now(), pointcloud_msg->header.stamp);
 
   // apply filtering to downsample point cloud further
+
+  /*
   // Divide space into voxels, replaces points within a voxels by their centroids.
-  // pcl::VoxelGrid<Point> sor;
-  // sor.setInputCloud(pointcloud_msg);
-  // // one cell within each "leafsize" meters
-  // float leafsize = 0.1;
-  // sor.setLeafSize(leafsize, leafsize, leafsize);
-  // sor.filter(*pointcloud_msg);
+  pcl::VoxelGrid<Point> sor;
+  sor.setInputCloud(pointcloud_msg);
+  // one cell within each "leafsize" meters
+  float leafsize = 0.1;
+  sor.setLeafSize(leafsize, leafsize, leafsize);
+  sor.filter(*pointcloud_msg);
+  */
+
+  // remove floor
+  float min_z = 99999.0;
+  for(size_t i=0; i < pointcloud_msg->points.size(); ++i) {
+    if (pointcloud_msg->points[i].z < min_z ) {
+      min_z = pointcloud_msg->points[i].z;
+    }
+  }
+  PointCloudPtr no_floor_cloud (new PointCloud());
+  pcl::PassThrough<Point> floor_filter;
+  floor_filter.setInputCloud(pointcloud_msg);
+  floor_filter.setFilterFieldName("z");
+  floor_filter.setFilterLimits(min_z + .1, min_z + 2.0);
+  floor_filter.filter(*no_floor_cloud);
+
   // publish filtered cloud
-  pcl_current_frame_pub.publish(pointcloud_msg);
+  pcl_current_frame_pub.publish(no_floor_cloud);
 }
 
 void LandmarkExtractorNode::updateConfig(kinect_slam::LandmarkExtractorConfig &config, uint32_t level)
