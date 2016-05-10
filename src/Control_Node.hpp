@@ -11,6 +11,11 @@
 #include <geometry_msgs/PoseStamped.h>
 #include "Control.hpp"
 #include "kinect_slam/LandmarkMsg.h"
+#include <random>
+#include <vector>
+#include <Eigen/Core>
+#include <math.h>
+typedef boost::shared_ptr<kinect_slam::LandmarkMsg const> LandmarkMsgConstPtr;
 class Control_Node
 {
 private:
@@ -41,5 +46,5 @@ public:
 	~Control_Node(){};
 	void sonarMeassageReceived(const sensor_msgs::PointCloud &msg);
 	void poseMeassageReceived(const geometry_msgs::PoseStamped &msg);
-    void pointMeassageReceived(const kinect_slam::LandmarkMsg &msg);
+    void pointMeassageReceived(const kinect_slam::LandmarkMsgConstPtr &msg);
 };

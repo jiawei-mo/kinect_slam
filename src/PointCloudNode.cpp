@@ -31,6 +31,7 @@ void PointCloudNode::image_callback(const sensor_msgs::ImageConstPtr& msg){
 
 void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& state_msg, const sensor_msgs::ImageConstPtr& dep)
 {
+	/*
 	// PROCESS STATE ESTIAMATE MESSAGE
 	float x = state_msg->pose.position.x;
 	float y = state_msg->pose.position.y;
@@ -49,8 +50,9 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 		init_pose = state_mean;
 		std::cout << init_pose << endl;
 	}
+	*/
 
-	/*
+
 	// PROCESS IMAGE MESSAGES
 	cv::Mat image_depth = cv_bridge::toCvCopy(dep)->image;
 	// set any nan values to zero
@@ -75,9 +77,9 @@ void PointCloudNode::pioneer_callback(const geometry_msgs::PoseStampedConstPtr& 
 	}
 	pointcloud_msg->height = 1;
 	pointcloud_msg->width = pointcloud_msg->points.size();
-	std::cout << "size of new cloud " << pointcloud_msg->points.size() << endl;
+	std::cout << "size of new point cloud " << pointcloud_msg->points.size() << endl;
 
-
+	/*
 	// pass new point cloud on for further processing
 	if (pointcloud_msg->points.size() > 0) {
 		//cloud_append(pointcloud_msg);
