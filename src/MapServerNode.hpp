@@ -1,8 +1,13 @@
 #include "ros/ros.h"
+#include <vector>
 #include <geometry_msgs/PoseStamped.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <iostream>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef message_filters::sync_policies::ApproximateTime<PointCloud, geometry_msgs::PoseStamped> MapSyncPolicy;
@@ -16,8 +21,10 @@ private:
 	message_filters::Synchronizer<MapSyncPolicy> sync;
 	ros::Publisher map_pub;
 
+	std::vector< std::vector<double> > map;
+
 public:
 	MapServerNode();
 	~MapServerNode(){};
-	void pclMessageCallback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info);
-}
+	void pclMessageCallback(const PointCloud::ConstPtr& pcl_pts, const geometry_msgs::PoseStampedConstPtr& pose);
+};

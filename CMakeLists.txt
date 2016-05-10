@@ -21,7 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   LandmarkMsg.msg
-  Pose2DMsg.msg
 )
 
 generate_dynamic_reconfigure_options(
@@ -39,6 +38,7 @@ add_executable(landmark_node src/LandmarkExtractorNode_main.cpp src/LandmarkExtr
 add_executable(control_node src/control_main.cpp src/Control_Node.cpp src/Control.cpp)
 add_executable(truth_node src/Truth_Node.cpp)
 add_executable(pc_node src/PointCloudeNode_main.cpp src/PointCloudNode.cpp)
+add_executable(mapserver_node src/MapServerNode_main.cpp src/MapServerNode.cpp)
 add_executable(map_node src/MappingSimulation_main.cpp src/MappingSimulation.cpp)
 
 add_dependencies(slam_node ${PROJECT_NAME}_gencfg)
@@ -61,6 +61,7 @@ target_link_libraries(slam_node ${catkin_LIBRARIES})
 target_link_libraries(landmark_node ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 target_link_libraries(control_node ${catkin_LIBRARIES})
 target_link_libraries(truth_node ${catkin_LIBRARIES})
+target_link_libraries(mapserver_node ${catkin_LIBRARIES})
 target_link_libraries(pc_node ${OpenCV_LIBRARIES} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
 target_link_libraries(map_node ${OpenCV_LIBRARIES} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
 
