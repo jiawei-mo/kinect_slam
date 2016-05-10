@@ -1,7 +1,7 @@
 #define KINECT_DISP 0.07	//measured
-#define KINECT_X_VAR 50
-#define KINECT_Y_VAR 50
-#define KINECT_S_VAR 50
+#define KINECT_X_VAR 30
+#define KINECT_Y_VAR 30
+#define KINECT_S_VAR 30
 #define MOTION_FACTOR 1
 #define TURN_FACTOR 1
 
