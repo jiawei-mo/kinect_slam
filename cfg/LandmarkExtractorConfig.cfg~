@@ -10,7 +10,7 @@ gen.add("harris_response_threshold", int_t, 0, "harris_response_threshold", 4, 0
 gen.add("harris_anms_flag", bool_t, 0, "harris_anms_flag", True);
 gen.add("harris_anms_radius", int_t, 0, "harris_anms_radius", 25, 1, 100)
 gen.add("harris_fix_number_flag", bool_t, 0, "harris_fix_number_flag", True);
-gen.add("harris_number_of_points", int_t, 0, "harris_number_of_points", 2000, 1, 4000)
+gen.add("harris_number_of_points", int_t, 0, "harris_number_of_points", 1540, 1, 2000)
 gen.add("harris_blur_size", int_t, 0, "harris_blur_size", 8, 1, 20)
 gen.add("harris_blur_variance", int_t, 0, "harris_blur_variance", 3, 1, 20)
 

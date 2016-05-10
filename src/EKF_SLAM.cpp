@@ -294,6 +294,7 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
   match(srcKeyPoints, srcDescriptors, destKeyPoints, destDescriptors, l_matches, new_points, max_signature_threshold, match_threshold, new_points_threshold);
   match(destKeyPoints, destDescriptors, srcKeyPoints, srcDescriptors, r_matches, t_new, max_signature_threshold, match_threshold, new_points_threshold);
 
+  // std::cout<<"lft: "<<l_matches.size()<<std::endl;
   for(int i=0; i<l_matches.size(); i++)
   {
     for(int j=0; j<r_matches.size(); j++)
