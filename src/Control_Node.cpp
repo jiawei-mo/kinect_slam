@@ -22,6 +22,7 @@ Control_Node::Control_Node()
   action_lock=0;
   sonar = nh.subscribe("RosAria/sonar",1, &Control_Node::sonarMeassageReceived,this);
   pose_correct=nh.subscribe("/pose1",1, &Control_Node::poseMeassageReceived,this);
+  point_data=nh.subscribe("raw_depth",1,&Control_Node::pointMeassageReceived,this);
   pose_corrected = 0;
   current_theta = 0;
   turn_flag=0;
@@ -90,8 +91,7 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    }
 }
  //pose correction using EKF estimation
-   current_time=ros::Time::now();
-   double cheat_time = current_time.sec - turn_time.sec;
+   
    if (!action_lock)
    { 
      action_lock = 1;
@@ -105,4 +105,9 @@ void Control_Node::poseMeassageReceived(const geometry_msgs::PoseStamped &msg)
   double temp_theta_z = msg.pose.orientation.z;
   double temp_theta_w = msg.pose.orientation.w;
   current_theta=atan2(temp_theta_z,temp_theta_w)*2;
+}
+
+void Control_Node::pointMeassageReceived(const kinect_slam::LandmarkMsg &msg)
+{
+ 
 }

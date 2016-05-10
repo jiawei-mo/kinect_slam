@@ -20,6 +20,8 @@ LandmarkExtractorNode::LandmarkExtractorNode():
   server.setCallback(f);
 
   landmark_pub = nh.advertise<kinect_slam::LandmarkMsg>("landmarkWithDscrt", 50);
+  raw_point_pub = nh.advertise<kinect_slam::LandmarkMsg>("raw_depth",50);
+
 }
 
 void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::ImageConstPtr& dep, const sensor_msgs::CameraInfoConstPtr& info)
@@ -53,6 +55,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   de_ptr->extract(gry_img, kp, dscrt);
 
   kinect_slam::LandmarkMsg new_measurement_msg;
+  kinect_slam::LandmarkMsg raw_measurement_msg;
 
   double fx = info->K[0];
   double cx = info->K[2];
@@ -64,7 +67,27 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   new_measurement_msg.landmark_count = 0;
   new_measurement_msg.descriptor_len = dscrt[0].size();
 
-  
+  //publish all points
+  for(int i=0;i<depth.rows/2;i++)
+  {
+  	for(int j=0;j<depth.cols/3;j++)
+  	{
+  		double z = depth.at<float>(i,j); //only collect point for left wall
+  		if(z<2.5)
+  		{
+  		  double x = z * (j - cx) / fx;
+	  	  double y = z * (i - cy) / fy;
+	  	  raw_measurement_msg.position_x.push_back(z);
+	      raw_measurement_msg.position_y.push_back(-x);
+	      raw_measurement_msg.position_signature.push_back(-y);
+	      raw_measurement_msg.landmark_count++;
+  		}
+  	}
+  }
+  //
+  std::cout <<raw_measurement_msg.landmark_count<<std::endl; 
+  raw_point_pub.publish(raw_measurement_msg);
+  //
   for(int i=0; i<kp.size(); i++)
   {
   	double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
