@@ -113,7 +113,7 @@ bool Control::pose_correction(double theta, int turn_flag, int turn_count)
 
 bool Control::follow_wall(int flag, int step_flag, double distance)
 {
-  double MOVE_TIME = 3, CLOCK_SPEED = 1;       //3,1
+  double MOVE_TIME = 4, CLOCK_SPEED = 1;       //3,1
   double BASE_SPEED=0.6;
   double maintain_distance = distance>=0? 1.2:1.2; 
   current_sonar = n.subscribe("RosAria/sonar",1, &Control::sonarMeassageReceived,this);

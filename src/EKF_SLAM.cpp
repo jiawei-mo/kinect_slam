@@ -203,7 +203,7 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	Eigen::MatrixXd S = H_accu*state_cov*H_accu.transpose()+R_accu;
 	S = (S + S.transpose()) / 2;
 	Eigen::MatrixXd K = state_cov * H_accu.transpose() * S.inverse();
-	std::cout<<"res: "<<std::endl<<measurements - _measurements<<std::endl;
+	// std::cout<<"res: "<<std::endl<<measurements - _measurements<<std::endl;
 	double S_cond = S.norm() * (S.inverse()).norm();
 	if (!(S_cond>0 && S_cond<80)) return;
 	// std::cout<<"S: "<<std::endl<<S_cond<<std::endl<<"end of S"<<std::endl;
@@ -238,7 +238,7 @@ void EKF_SLAM::measurement_update(Eigen::VectorXd measurements, Eigen::VectorXd 
 	}
 }
 
-void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<std::array<size_t, 3> >& matches, std::vector<std::array<size_t, 3> >& new_points, double max_signature_threshold, double match_threshold, double new_points_threshold)
+void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, const Eigen::MatrixXd& destKeyPoints, const std::vector< boost::dynamic_bitset<> >& destDescriptors, std::vector<std::array<size_t, 3> >& matches, std::vector<std::array<size_t, 3> >& new_points, double max_signature_threshold, int match_threshold, int new_points_threshold)
 {
 	for(size_t i=0;i<srcKeyPoints.cols();i++)
   {
@@ -254,14 +254,16 @@ void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynami
 
       boost::dynamic_bitset<> cur_bit = srcDescriptors[i] ^ destDescriptors[j];
       size_t cur_dist = cur_bit.count();
-      if(dist == -1 || dist > cur_dist)
+      if(dist > cur_dist)
       {
         idx = j;
         scd_dist = dist;
         dist = cur_dist;
       }
     }
-    if(dist < match_threshold*scd_dist && idx>0)
+    // std::cout<<"dest: "<<destKeyPoints.cols()<<std::endl;
+    // std::cout<<"dist: "<<dist<<std::endl;
+    if(dist < match_threshold && idx>0)
     {
       std::array<size_t, 3> match_i = {i, idx, dist};
       matches.push_back(match_i);
@@ -274,7 +276,7 @@ void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynami
   }
 }
 
-void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<std::array<size_t, 3> >& matches, std::vector<std::array<size_t, 3> >& new_points, double max_signature_threshold, double match_threshold, double new_points_threshold) const
+void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynamic_bitset<> >& srcDescriptors, std::vector<std::array<size_t, 3> >& matches, std::vector<std::array<size_t, 3> >& new_points, double max_signature_threshold, int match_threshold, int new_points_threshold) const
 {
 	Eigen::MatrixXd destKeyPoints(3, num_landmarks);
 	for(int i=0; i<num_landmarks; i++)
@@ -297,7 +299,10 @@ void EKF_SLAM::landmark_match(const Eigen::MatrixXd& srcKeyPoints, const std::ve
     for(int j=0; j<r_matches.size(); j++)
     {
       if(l_matches[i][0] == r_matches[j][1] && l_matches[i][1] == r_matches[j][0])
+      {
+	    // std::cout<<"dist: "<<l_matches[i][2]<<std::endl;
         matches.push_back(l_matches[i]);
+	  }
     }
   }
 }

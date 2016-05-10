@@ -78,15 +78,15 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    else if (msg.points[0].y<=0.7)
    {
     action_lock = myCtrl.follow_wall(1,1,msg.points[0].y); //slightly turn right
-    action_lock = 1;
-    action_lock = myCtrl.follow_wall(0,2,msg.points[0].y);
+    //action_lock = 1;
+    //action_lock = myCtrl.follow_wall(0,2,msg.points[0].y);
     turn_flag = 2;
    }
    else
    {
     action_lock = myCtrl.follow_wall(0,1,msg.points[6].y); //slightly turn left
-    action_lock =1;
-    action_lock = myCtrl.follow_wall(1,2,msg.points[6].y);
+    //action_lock =1;
+    //action_lock = myCtrl.follow_wall(1,2,msg.points[6].y);
     turn_flag = 2;
    }
 }
