@@ -10,8 +10,8 @@
 LandmarkExtractorNode::LandmarkExtractorNode():
   img_sub(nh, "/camera/rgb/image_color", 1),
   dep_sub(nh, "/camera/depth/image", 1),
-	info_sub(nh, "/camera/depth/camera_info", 1),
-	sync(KinectSyncPolicy(10), img_sub, dep_sub, info_sub)
+  info_sub(nh, "/camera/depth/camera_info", 1),
+  sync(KinectSyncPolicy(10), img_sub, dep_sub, info_sub)
 {
   sync.registerCallback(boost::bind(&LandmarkExtractorNode::imageMessageCallback, this, _1, _2, _3));
   fd_ptr = boost::shared_ptr<HarrisDetector>(new HarrisDetector(7, 50, 50, 3, true, false, 7, 3));
@@ -70,41 +70,41 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   //publish all points
   for(int i=0;i<depth.rows/2;i++)
   {
-  	for(int j=0;j<depth.cols/3;j++)
-  	{
-  		double z = depth.at<float>(i,j); //only collect point for left wall
-  		if(z<2.5)
-  		{
-  		  double x = z * (j - cx) / fx;
-	  	  double y = z * (i - cy) / fy;
-	  	  raw_measurement_msg.position_x.push_back(z);
-	      raw_measurement_msg.position_y.push_back(-x);
-	      raw_measurement_msg.position_signature.push_back(-y);
-	      raw_measurement_msg.landmark_count++;
-  		}
-  	}
+    for(int j=0;j<depth.cols/3;j++)
+    {
+      double z = depth.at<float>(i,j); //only collect point for left wall
+      if(z<2.5)
+      {
+        double x = z * (j - cx) / fx;
+        double y = z * (i - cy) / fy;
+        raw_measurement_msg.position_x.push_back(z);
+        raw_measurement_msg.position_y.push_back(-x);
+        raw_measurement_msg.position_signature.push_back(-y);
+        raw_measurement_msg.landmark_count++;
+      }
+    }
   }
   if(raw_measurement_msg.landmark_count<=100)
   {
-  	 raw_measurement_msg.position_x.clear();
-	 raw_measurement_msg.position_y.clear();
-	 raw_measurement_msg.position_signature.clear();
-	 raw_measurement_msg.landmark_count=0;
+     raw_measurement_msg.position_x.clear();
+   raw_measurement_msg.position_y.clear();
+   raw_measurement_msg.position_signature.clear();
+   raw_measurement_msg.landmark_count=0;
    for(int i=depth.rows/2;i<depth.rows;i++)
    {
-  	for(int j=depth.cols*2/3;j<depth.cols;j++)
-  	{
-  		double z = depth.at<float>(i,j); //only collect point for left wall
-  		if(z<2.5)
-  		{
-  		  double x = z * (j - cx) / fx;
-	  	  double y = z * (i - cy) / fy;
-	  	  raw_measurement_msg.position_x.push_back(z);
-	      raw_measurement_msg.position_y.push_back(-x);
-	      raw_measurement_msg.position_signature.push_back(-y);
-	      raw_measurement_msg.landmark_count++;
-  		}
-  	}
+    for(int j=depth.cols*2/3;j<depth.cols;j++)
+    {
+      double z = depth.at<float>(i,j); //only collect point for left wall
+      if(z<2.5)
+      {
+        double x = z * (j - cx) / fx;
+        double y = z * (i - cy) / fy;
+        raw_measurement_msg.position_x.push_back(z);
+        raw_measurement_msg.position_y.push_back(-x);
+        raw_measurement_msg.position_signature.push_back(-y);
+        raw_measurement_msg.landmark_count++;
+      }
+    }
   }
   }
   //
@@ -113,25 +113,25 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   //
   for(int i=0; i<kp.size(); i++)
   {
-  	double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
+    double z = depth.at<float>(kp[i].pt.y, kp[i].pt.x);
     if(z>MIN_DEPTH && z<MAX_DEPTH)
     {
-	    // std::cout<<"Depth: "<<z<<std::endl;
-	  	double x = z * (kp[i].pt.x - cx) / fx;
-	  	double y = z * (kp[i].pt.y - cy) / fy;
-	    new_measurement_msg.position_x.push_back(z);
-	    new_measurement_msg.position_y.push_back(-x);
-	    new_measurement_msg.position_signature.push_back(-y);
-	    for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
-	    new_measurement_msg.landmark_count++;
+      // std::cout<<"Depth: "<<z<<std::endl;
+      double x = z * (kp[i].pt.x - cx) / fx;
+      double y = z * (kp[i].pt.y - cy) / fy;
+      new_measurement_msg.position_x.push_back(z);
+      new_measurement_msg.position_y.push_back(-x);
+      new_measurement_msg.position_signature.push_back(-y);
+      for(int j=0; j<dscrt[i].size(); j++) new_measurement_msg.descriptor_mat.push_back(dscrt[i][j]? 1.0 : 0.0);
+      new_measurement_msg.landmark_count++;
       circle(clr_img, kp[i].pt, 5, CV_RGB(255,0,0));
-  	}
+    }
   }
 
   cv::namedWindow("Feature Points");
   cv::imshow("Feature Points", clr_img);
   cv::waitKey(3);
- 	landmark_pub.publish(new_measurement_msg);
+  landmark_pub.publish(new_measurement_msg);
 
 
 
@@ -139,9 +139,9 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   cv::patchNaNs(depth, 0.0);
   PointCloudPtr pointcloud_msg (new PointCloud);
   Point pt;
-  for (int y = 0; y < depth.rows; y+=4) {
-    for (int x = 0; x < depth.cols; x+=4) {
-      float z = depth.at<short int>(cv::Point(x,y)) / 1000.0;
+  for (int i = 0; i < depth.rows; i+=4) {
+    for (int j = 0; j < depth.cols; j+=4) {
+      float z = depth.at<short int>(cv::Point(i,j)) / 1000.0;
       if (z > 0.0) {
         double x = z * (j - cx) / fx;
         double y = z * (i - cy) / fy;

@@ -14,6 +14,9 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo> KinectSyncPolicy;
+typedef pcl::PointXYZ Point;
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudPtr;
 
 class LandmarkExtractorNode
 {
