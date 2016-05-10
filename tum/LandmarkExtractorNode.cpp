@@ -8,8 +8,8 @@
 #include <iostream>
 
 LandmarkExtractorNode::LandmarkExtractorNode():
-  img_sub(nh, "/camera/rgb/image_rect_color", 1),
-  dep_sub(nh, "/camera/depth/image_rect", 1),
+  img_sub(nh, "/camera/rgb/image_color", 1),
+  dep_sub(nh, "/camera/depth/image", 1),
   info_sub(nh, "/camera/depth/camera_info", 1),
   sync(KinectSyncPolicy(10), img_sub, dep_sub, info_sub)
 {
