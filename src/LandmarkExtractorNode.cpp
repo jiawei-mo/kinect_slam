@@ -84,6 +84,29 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   		}
   	}
   }
+  if(raw_measurement_msg.landmark_count<=100)
+  {
+  	 raw_measurement_msg.position_x.clear();
+	 raw_measurement_msg.position_y.clear();
+	 raw_measurement_msg.position_signature.clear();
+	 raw_measurement_msg.landmark_count=0;
+   for(int i=depth.rows/2;i<depth.rows;i++)
+   {
+  	for(int j=depth.cols*2/3;j<depth.cols;j++)
+  	{
+  		double z = depth.at<float>(i,j); //only collect point for left wall
+  		if(z<2.5)
+  		{
+  		  double x = z * (j - cx) / fx;
+	  	  double y = z * (i - cy) / fy;
+	  	  raw_measurement_msg.position_x.push_back(z);
+	      raw_measurement_msg.position_y.push_back(-x);
+	      raw_measurement_msg.position_signature.push_back(-y);
+	      raw_measurement_msg.landmark_count++;
+  		}
+  	}
+  }
+  }
   //
   std::cout <<raw_measurement_msg.landmark_count<<std::endl; 
   raw_point_pub.publish(raw_measurement_msg);
