@@ -22,15 +22,15 @@ private:
 	dynamic_reconfigure::Server<kinect_slam::EKFSLAMConfig>::CallbackType f;
 
   double max_signature_threshold;
-  double match_threshold;
-  double new_points_threshold;
+  int match_threshold;
+  int new_points_threshold;
   ros::Time pre_time_stamp;
   double ini_flag;
 public:
 	EKF_SLAM_Node();
 	~EKF_SLAM_Node(){};
 	void updateConfig(kinect_slam::EKFSLAMConfig &config, uint32_t level);
-	void Ctrl_republish(const geometry_msgs::TwistStamped& ctrl);
+	void Ctrl_republish(const nav_msgs::OdometryConstPtr& ctrl);
 	void CtrlCallback(const geometry_msgs::TwistStamped &ctrl);
 	void LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk);
 };
