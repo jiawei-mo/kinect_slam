@@ -7,7 +7,7 @@ bool Control::pose_correction(double theta, int turn_flag, int turn_count)
   // robot = new ArRobot();
   //double time_threshold = 80;
   lock = 0;
-  double BASE_SPEED = 0.4, MOVE_TIME = 2, CLOCK_SPEED = 1;
+  double BASE_SPEED = 0.3, MOVE_TIME = 2, CLOCK_SPEED = 1;
   if (turn_flag>0)
   {
     BASE_SPEED = 0.05;

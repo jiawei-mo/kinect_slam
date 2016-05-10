@@ -10,7 +10,7 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include "Control.hpp"
-
+#include "kinect_slam/LandmarkMsg.h"
 class Control_Node
 {
 private:
@@ -31,6 +31,7 @@ private:
     ros::Time current_time;
     ros::Publisher pub;
     ros::Publisher velocity;
+    ros::Subscriber point_data;
     int turn_flag;
     bool follow_wall_flag;
    // double pre_sonar;
@@ -39,4 +40,5 @@ public:
 	~Control_Node(){};
 	void sonarMeassageReceived(const sensor_msgs::PointCloud &msg);
 	void poseMeassageReceived(const geometry_msgs::PoseStamped &msg);
+    void pointMeassageReceived(const kinect_slam::LandmarkMsg &msg);
 };

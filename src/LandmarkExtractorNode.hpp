@@ -21,6 +21,7 @@ private:
 	message_filters::Synchronizer<KinectSyncPolicy> sync;
 	ros::Publisher landmark_pub;
 	ros::Publisher pcl_pub;
+	ros::Publisher raw_point_pub;
 	boost::shared_ptr<HarrisDetector> fd_ptr;
 	boost::shared_ptr<BRIEF> de_ptr;
 	dynamic_reconfigure::Server<kinect_slam::LandmarkExtractorConfig> server;
