@@ -139,8 +139,8 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   cv::patchNaNs(depth, 0.0);
   PointCloudPtr pointcloud_msg (new PointCloud);
   Point pt;
-  for (int i = 0; i < depth.rows; i+=4) {
-    for (int j = 0; j < depth.cols; j+=4) {
+  for (int i = 0; i < depth.rows; i+=16) {
+    for (int j = 0; j < depth.cols; j+=16) {
       double z = depth.at<float>(i,j);
       if (z > MIN_DEPTH && z < MAX_DEPTH) {
         double x = z * (j - cx) / fx;
@@ -148,6 +148,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
         pt.x = z;
         pt.y = -x;
         pt.z = -y;
+        if(pt.z < 0.1) continue; 
         pointcloud_msg->points.push_back(pt);
       }
     }
@@ -171,21 +172,21 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   */
 
   // remove floor
-  float min_z = 99999.0;
-  for(size_t i=0; i < pointcloud_msg->points.size(); ++i) {
-    if (pointcloud_msg->points[i].z < min_z ) {
-      min_z = pointcloud_msg->points[i].z;
-    }
-  }
-  PointCloudPtr no_floor_cloud (new PointCloud());
-  pcl::PassThrough<Point> floor_filter;
-  floor_filter.setInputCloud(pointcloud_msg);
-  floor_filter.setFilterFieldName("z");
-  floor_filter.setFilterLimits(min_z + .1, min_z + 2.0);
-  floor_filter.filter(*no_floor_cloud);
+  // float min_z = 99999.0;
+  // for(size_t i=0; i < pointcloud_msg->points.size(); ++i) {
+  //   if (pointcloud_msg->points[i].z < min_z ) {
+  //     min_z = pointcloud_msg->points[i].z;
+  //   }
+  // }
+  // PointCloudPtr no_floor_cloud (new PointCloud());
+  // pcl::PassThrough<Point> floor_filter;
+  // floor_filter.setInputCloud(pointcloud_msg);
+  // floor_filter.setFilterFieldName("z");
+  // floor_filter.setFilterLimits(min_z + .1, min_z + 2.0);
+  // floor_filter.filter(*no_floor_cloud);
 
   // publish filtered cloud
-  pcl_current_frame_pub.publish(no_floor_cloud);
+  pcl_current_frame_pub.publish(pointcloud_msg);
 }
 
 void LandmarkExtractorNode::updateConfig(kinect_slam::LandmarkExtractorConfig &config, uint32_t level)
