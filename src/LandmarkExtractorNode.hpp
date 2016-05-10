@@ -8,6 +8,10 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include "kinect_slam/LandmarkMsg.h"
+#include <pcl/filters/voxel_grid.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo> KinectSyncPolicy;
 
@@ -20,7 +24,7 @@ private:
 	message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub;
 	message_filters::Synchronizer<KinectSyncPolicy> sync;
 	ros::Publisher landmark_pub;
-	ros::Publisher pcl_pub;
+	ros::Publisher pcl_current_frame_pub;
 	ros::Publisher raw_point_pub;
 	boost::shared_ptr<HarrisDetector> fd_ptr;
 	boost::shared_ptr<BRIEF> de_ptr;
