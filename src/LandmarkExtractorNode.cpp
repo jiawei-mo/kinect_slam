@@ -141,7 +141,7 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   Point pt;
   for (int i = 0; i < depth.rows; i+=4) {
     for (int j = 0; j < depth.cols; j+=4) {
-      float z = depth.at<short int>(cv::Point(i,j)) / 1000.0;
+      double z = depth.at<short int>(cv::Point(i,j)) / 1000.0;
       if (z > 0.0) {
         double x = z * (j - cx) / fx;
         double y = z * (i - cy) / fy;
