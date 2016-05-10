@@ -19,47 +19,8 @@ bool Control::pose_correction(double theta, int turn_flag)
   geometry_msgs::TwistStamped correct_pub;
   ros::Publisher pub=n.advertise<geometry_msgs::Twist>("RosAria/cmd_vel",1);
   ros::Publisher velocity =n.advertise<geometry_msgs::TwistStamped>("/control",1);
-  // ros::Publisher test_theta = n.advertise<geometry_msgs::Pose2D>("/test_theta",1);
-  // geometry_msgs::Pose2D temp_theta;
-  // temp_theta.theta=theta;
-  ///////////////////
-  // double desire_orientation;
-  // switch (turn_count)
-  // {
-  //   case 0 : desire_orientation = 0;
-  //            break;
-  //   case 1: desire_orientation = PI/2;
-  //            break;
-  //   case 2: desire_orientation = PI;
-  //            break;
-  //   case 3 : desire_orientation = 3*PI/2;
-  //            break;
-  //   default : desire_orientation = PI*2;
-  //            break;
-  // }
-  // correct.angular.z = desire_orientation - theta;
-  // if (desire_orientation == 0 && theta > PI*3/2)
-  // {
-  //    correct.angular.z = 2*PI - theta;
-  // }
-  ///////////
-  // double desire_orientation = 0;
-  // double matching_distance;
-  // double min_matching_distance = 3*PI; 
-  // for (int i=0;i<4;i++)
-  //  {
-  //     matching_distance = abs(desire_orientation-i*PI/2);
-  //     if(matching_distance<min_matching_distance)
-  //     {
-  //       desire_orientation=i*PI/2;
-  //       min_matching_distance=matching_distance;
-  //     }
-  //  }
-  //  if(abs(2*PI-theta)<threshold)
-  //  desire_orientation = 2*PI; 
-  //  correct.angular.z = desire_orientation - theta;
-   ////////////
-   if (abs(0-theta)<threshold && !lock)
+
+  if (abs(0-theta)<threshold && !lock)
   {
       correct.angular.z=(0-theta);///int(MOVE_TIME/CLOCK_SPEED);
       lock=1;
@@ -114,7 +75,7 @@ bool Control::pose_correction(double theta, int turn_flag)
 bool Control::follow_wall(int flag, int step_flag, double distance)
 {
   double MOVE_TIME = 3, CLOCK_SPEED = 1;       //3,1
-  double BASE_SPEED=0.6;
+  double BASE_SPEED=0.5;
   double maintain_distance = distance>=0? 1.2:1.2; 
   current_sonar = n.subscribe("RosAria/sonar",1, &Control::sonarMeassageReceived,this);
   ////////normal control///////
@@ -162,16 +123,16 @@ bool Control::follow_wall(int flag, int step_flag, double distance)
    while(ros::ok() && count<MOVE_TIME/CLOCK_SPEED)
    {
       //compute PID gain
-        current_error = distance>=0 ? maintain_distance - current_left : maintain_distance + current_right;
-        integ += current_error;
-        deriv = pre_error-current_error;
-        if (deriv<=0.5 && prop>=0 && prop<2)
-        {
-   	     PID_factor = K_p*prop + K_i*integ + K_d*deriv;
-   	    }
-   	    std::cout<<"current PID factor is " <<PID_factor<<std::endl;
+        // current_error = distance>=0 ? maintain_distance - current_left : maintain_distance + current_right;
+        // integ += current_error;
+        // deriv = pre_error-current_error;
+        // if (deriv<=0.5 && prop>=0 && prop<2)
+        // {
+   	    //  PID_factor = K_p*prop + K_i*integ + K_d*deriv;
+   	    // }
+   	    // std::cout<<"current PID factor is " <<PID_factor<<std::endl;
       //
-      follow_wall_first.linear.x = BASE_SPEED*PID_factor;
+      follow_wall_first.linear.x = BASE_SPEED;
       follow_wall_first.angular.z = follow_wall_first.angular.z;//* PID_factor;
       pub.publish(follow_wall_first);
       follow_wall_pub.twist=follow_wall_first;
