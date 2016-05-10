@@ -141,8 +141,8 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
   Point pt;
   for (int i = 0; i < depth.rows; i+=4) {
     for (int j = 0; j < depth.cols; j+=4) {
-      double z = depth.at<short int>(cv::Point(i,j)) / 1000.0;
-      if (z > 0.0) {
+      double z = depth.at<float>(i, j);
+      if (z>MIN_DEPTH && z<MAX_DEPTH) {
         double x = z * (j - cx) / fx;
         double y = z * (i - cy) / fy;
         pt.x = z;
@@ -160,12 +160,12 @@ void LandmarkExtractorNode::imageMessageCallback(const sensor_msgs::ImageConstPt
 
   // apply filtering to downsample point cloud further
   // Divide space into voxels, replaces points within a voxels by their centroids.
-  pcl::VoxelGrid<Point> sor;
-  sor.setInputCloud(pointcloud_msg);
-  // one cell within each "leafsize" meters
-  float leafsize = 0.1;
-  sor.setLeafSize(leafsize, leafsize, leafsize);
-  sor.filter(*pointcloud_msg);
+  // pcl::VoxelGrid<Point> sor;
+  // sor.setInputCloud(pointcloud_msg);
+  // // one cell within each "leafsize" meters
+  // float leafsize = 0.1;
+  // sor.setLeafSize(leafsize, leafsize, leafsize);
+  // sor.filter(*pointcloud_msg);
   // publish filtered cloud
   pcl_current_frame_pub.publish(pointcloud_msg);
 }
