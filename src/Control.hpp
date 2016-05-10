@@ -11,7 +11,7 @@
 class Control
 {
 public:
-	bool pose_correction(double theta, int turn_flag, int turn_count);
+	bool pose_correction(double theta, int turn_flag);
 	bool follow_wall(int flag, int step_flag,double distance);
 	bool turn_left();
 	bool turn_right();

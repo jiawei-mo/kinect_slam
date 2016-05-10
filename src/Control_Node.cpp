@@ -91,12 +91,20 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    }
 }
  //pose correction using EKF estimation
-   
+   current_time =ros::Time::now();
    if (!action_lock)
    { 
-     action_lock = 1;
-     action_lock = myCtrl.pose_correction(current_theta,turn_flag,turn_count);
-     turn_flag--;
+   	 if(turn_flag>0 || current_time.sec-turn_time.sec<10)
+   	 {
+      action_lock = 1;
+      action_lock = myCtrl.pose_correction(current_EKF_theta,turn_flag);
+      turn_flag--;
+     }
+     else
+     {
+      action_lock = 1;
+      action_lock = myCtrl.pose_correction(current_theta,0);
+     }
    }
 }
 
@@ -104,7 +112,7 @@ void Control_Node::poseMeassageReceived(const geometry_msgs::PoseStamped &msg)
 {
   double temp_theta_z = msg.pose.orientation.z;
   double temp_theta_w = msg.pose.orientation.w;
-  current_theta=atan2(temp_theta_z,temp_theta_w)*2;
+  current_EKF_theta=atan2(temp_theta_z,temp_theta_w)*2;
 }
 
 void Control_Node::pointMeassageReceived(const kinect_slam::LandmarkMsg &msg)
