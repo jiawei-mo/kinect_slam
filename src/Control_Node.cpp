@@ -91,10 +91,10 @@ void Control_Node::sonarMeassageReceived(const sensor_msgs::PointCloud &msg)
    }
 }
  //pose correction using EKF estimation
-   current_time = ros::Time::now();
+   current_time =ros::Time::now();
    if (!action_lock)
    { 
-   	 if(current_time.sec - turn_time.sec<8)
+   	 if(turn_flag>0 || current_time.sec-turn_time.sec<10)
    	 {
       action_lock = 1;
       action_lock = myCtrl.pose_correction(current_EKF_theta,turn_flag);
