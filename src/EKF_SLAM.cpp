@@ -262,7 +262,7 @@ void match(const Eigen::MatrixXd& srcKeyPoints, const std::vector< boost::dynami
       }
     }
     // std::cout<<"dest: "<<destKeyPoints.cols()<<std::endl;
-    // std::cout<<"dist: "<<dist<<std::endl;
+    std::cout<<"dist: "<<dist<<std::endl;
     if(dist < match_threshold && idx>0)
     {
       std::array<size_t, 3> match_i = {i, idx, dist};
