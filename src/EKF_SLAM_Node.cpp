@@ -85,7 +85,7 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
   //std::cout<<matches.size()<<std::endl;
   
   /* The flag determines which landmark matches are new. flag = true => correspondance; flag = false => new */
-  std::cout<<"Total points: "<<landmark_count<<" Matched points: "<<matches.size()<<" New points: "<<new_points.size()<<std::endl;
+  // std::cout<<"Total points: "<<landmark_count<<" Matched points: "<<matches.size()<<" New points: "<<new_points.size()<<std::endl;
   
   /* add matched elements to the H stack */
   Eigen::VectorXd matched_measurement(3*matches.size());
@@ -108,7 +108,7 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
       slam_ptr->add_landmark(measurements(0,new_points[i][0]), measurements(1,new_points[i][0]), measurements(2,new_points[i][0]), descriptors[new_points[i][0]]);
   }
   slam_ptr->landmark_pcl_pub();
-  slam_ptr->landmark_count();
+  // slam_ptr->landmark_count();
   // slam_ptr->print_state();
 }
 

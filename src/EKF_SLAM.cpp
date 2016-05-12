@@ -334,6 +334,7 @@ void EKF_SLAM::print_state()
 
 void EKF_SLAM::landmark_count()
 {
+  std::cout<<"Number of landmarks in the map: ";
 	std::cout<<(state_mean.rows()-3)/3<<std::endl;
 }
 
