@@ -99,7 +99,7 @@ void EKF_SLAM_Node::LmkCallback(const kinect_slam::LandmarkMsgConstPtr& lmk)
     matched_idx(i) = matches[i][1];
   }
 
-   slam_ptr->measurement_update(matched_measurement, matched_idx); /* add the landmark to the H stack */
+   // slam_ptr->measurement_update(matched_measurement, matched_idx); /* add the landmark to the H stack */
 
 
   /* New landmarks are added to the history of landmarks */
